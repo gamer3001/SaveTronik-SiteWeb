@@ -105,7 +105,7 @@
                 <button class="filter-btn" data-filter="vendu">Vendus</button>
                 <button class="filter-btn" data-filter="hors-stock">Hors stock</button>
             </div>
-            
+
             <div id="products-grid" class="products-grid">
                 <div class="empty-state">Chargement des produits...</div>
             </div>
@@ -121,46 +121,90 @@
         </div>
     </footer>
 
+    <!-- ✅ CDN Supabase : injecte window.supabase, NE PAS redéclarer 'supabase' après -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+
     <script>
-        const { createClient } = window.supabase;
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        // =========================================================
+        // ✅ FIX CRITIQUE : on utilise "db" au lieu de "supabase"
+        // pour éviter le conflit avec window.supabase (CDN global)
+        // =========================================================
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        console.log('[SaveTronik] ✅ Client Supabase initialisé (db)');
 
         let currentFilter = 'all';
-        let userId = localStorage.getItem('savetronik_userid') || crypto.randomUUID();
-        localStorage.setItem('savetronik_userid', userId);
 
-        async function loadProducts() {
-            console.log('Chargement des produits...');
-            const { data: products, error } = await supabase
-                .from('produits')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            console.log('Produits:', products);
-            console.log('Erreur:', error);
-
-            if (error) {
-                document.getElementById('products-grid').innerHTML = 
-                    '<div class="empty-state">Erreur: ' + error.message + '</div>';
-                return;
-            }
-
-            if (!products || products.length === 0) {
-                document.getElementById('products-grid').innerHTML = 
-                    '<div class="empty-state">Aucun produit pour le moment. Revenez bientôt !</div>';
-                return;
-            }
-
-            renderProducts(products);
+        // ✅ Identifiant utilisateur persistant (pour les likes)
+        let userId = localStorage.getItem('savetronik_userid');
+        if (!userId) {
+            userId = crypto.randomUUID();
+            localStorage.setItem('savetronik_userid', userId);
+            console.log('[SaveTronik] 🆕 Nouvel userId créé :', userId);
+        } else {
+            console.log('[SaveTronik] 🔁 userId existant :', userId);
         }
 
-        async function renderProducts(products) {
+        // =========================================================
+        // CHARGEMENT DES PRODUITS
+        // =========================================================
+        async function loadProducts() {
+            console.log('[SaveTronik] 🔄 loadProducts() appelée, filtre actif :', currentFilter);
+
+            // ✅ Vérification que le DOM est prêt avant toute manipulation
             const grid = document.getElementById('products-grid');
-            const filtered = currentFilter === 'all' 
-                ? products 
+            if (!grid) {
+                console.error('[SaveTronik] ❌ Élément #products-grid introuvable dans le DOM !');
+                return;
+            }
+
+            grid.innerHTML = '<div class="empty-state">Chargement des produits...</div>';
+
+            try {
+                const { data: products, error } = await db
+                    .from('produits')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.error('[SaveTronik] ❌ Erreur Supabase (SELECT produits) :', error.message, error);
+                    grid.innerHTML = `<div class="empty-state">Erreur lors du chargement : ${error.message}</div>`;
+                    return;
+                }
+
+                console.log('[SaveTronik] ✅ Produits reçus :', products?.length ?? 0, 'produit(s)', products);
+
+                if (!products || products.length === 0) {
+                    grid.innerHTML = '<div class="empty-state">Aucun produit pour le moment. Revenez bientôt !</div>';
+                    return;
+                }
+
+                await renderProducts(products);
+
+            } catch (err) {
+                console.error('[SaveTronik] ❌ Erreur inattendue dans loadProducts() :', err);
+                grid.innerHTML = `<div class="empty-state">Erreur inattendue : ${err.message}</div>`;
+            }
+        }
+
+        // =========================================================
+        // RENDU DES PRODUITS
+        // =========================================================
+        async function renderProducts(products) {
+            console.log('[SaveTronik] 🎨 renderProducts() appelée');
+
+            const grid = document.getElementById('products-grid');
+            if (!grid) {
+                console.error('[SaveTronik] ❌ #products-grid absent du DOM dans renderProducts()');
+                return;
+            }
+
+            const filtered = currentFilter === 'all'
+                ? products
                 : products.filter(p => p.status === currentFilter);
+
+            console.log('[SaveTronik] 🔍 Produits après filtrage :', filtered.length, 'résultat(s) pour filtre =', currentFilter);
 
             if (filtered.length === 0) {
                 grid.innerHTML = '<div class="empty-state">Aucun produit dans cette catégorie</div>';
@@ -170,94 +214,151 @@
             grid.innerHTML = '';
 
             for (const product of filtered) {
-                const { data: likes } = await supabase
-                    .from('likes')
-                    .select('*')
-                    .eq('product_id', product.id);
+                try {
+                    // ✅ Récupération des likes pour ce produit
+                    const { data: likes, error: likesError } = await db
+                        .from('likes')
+                        .select('*')
+                        .eq('product_id', product.id);
 
-                const likeCount = likes?.length || 0;
-                const userLiked = likes?.some(l => l.user_id === userId) || false;
+                    if (likesError) {
+                        console.warn('[SaveTronik] ⚠️ Erreur likes pour produit', product.id, ':', likesError.message);
+                    }
 
-                const statusClass = product.status || 'disponible';
-                const statusLabel = statusClass === 'disponible' ? 'Disponible' 
-                    : statusClass === 'vendu' ? 'Vendu' 
-                    : 'Hors stock';
+                    const likeCount = likes?.length || 0;
+                    const userLiked = likes?.some(l => l.user_id === userId) || false;
 
-                const imageHtml = product.image_url 
-                    ? `<img src="${product.image_url}" alt="${product.nom}">`
-                    : `<div style="display:flex;align-items:center;justify-content:center;font-size:4rem;">💻</div>`;
+                    console.log(`[SaveTronik] 💾 Produit "${product.nom}" — likes: ${likeCount}, liké par user: ${userLiked}`);
 
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.innerHTML = `
-                    <div class="product-image">${imageHtml}</div>
-                    <div class="content">
-                        <span class="status ${statusClass}">${statusLabel}</span>
-                        <h3>${product.nom}</h3>
-                        <p>${product.description || ''}</p>
-                        <span class="price">${product.prix}€</span>
-                        ${product.prix_original ? `<span class="original-price">${product.prix_original}€</span>` : ''}
-                        <div class="product-actions">
-                            <button class="btn-like ${userLiked ? 'liked' : ''}" data-id="${product.id}">
-                                <span class="heart">${userLiked ? '❤️' : '🤍'}</span>
-                                <span class="count">${likeCount}</span>
-                            </button>
-                            <button class="btn-like" style="border-color: var(--primary); color: var(--primary);" 
-                                onclick="alert('Contact: contact@savetronik.org')">
-                                📩 Contacter
-                            </button>
+                    const statusClass = product.status || 'disponible';
+                    const statusLabel = statusClass === 'disponible' ? 'Disponible'
+                        : statusClass === 'vendu' ? 'Vendu'
+                        : 'Hors stock';
+
+                    const imageHtml = product.image_url
+                        ? `<img src="${product.image_url}" alt="${product.nom}">`
+                        : `<div style="display:flex;align-items:center;justify-content:center;font-size:4rem;height:200px;">💻</div>`;
+
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.dataset.productId = product.id;
+                    card.innerHTML = `
+                        <div class="product-image">${imageHtml}</div>
+                        <div class="content">
+                            <span class="status ${statusClass}">${statusLabel}</span>
+                            <h3>${product.nom}</h3>
+                            <p>${product.description || ''}</p>
+                            <span class="price">${product.prix}€</span>
+                            ${product.prix_original ? `<span class="original-price">${product.prix_original}€</span>` : ''}
+                            <div class="product-actions">
+                                <button class="btn-like ${userLiked ? 'liked' : ''}" data-id="${product.id}">
+                                    <span class="heart">${userLiked ? '❤️' : '🤍'}</span>
+                                    <span class="count">${likeCount}</span>
+                                </button>
+                                <button class="btn-like" style="border-color: var(--primary); color: var(--primary);"
+                                    onclick="alert('Contact : contact@savetronik.org')">
+                                    📩 Contacter
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                `;
-                grid.appendChild(card);
+                    `;
+                    grid.appendChild(card);
+
+                } catch (err) {
+                    console.error('[SaveTronik] ❌ Erreur de rendu pour produit', product?.id, ':', err);
+                }
             }
 
-            // Event listeners pour les likes
+            // ✅ Attacher les listeners de like APRÈS l'injection dans le DOM
             document.querySelectorAll('.btn-like[data-id]').forEach(btn => {
                 btn.addEventListener('click', () => toggleLike(btn.dataset.id));
             });
+
+            console.log('[SaveTronik] ✅ Rendu terminé —', filtered.length, 'carte(s) affichée(s)');
         }
 
+        // =========================================================
+        // TOGGLE LIKE
+        // =========================================================
         async function toggleLike(productId) {
-            const { data: existingLike } = await supabase
-                .from('likes')
-                .select('*')
-                .eq('product_id', productId)
-                .eq('user_id', userId)
-                .single();
+            console.log('[SaveTronik] 👍 toggleLike() pour produit :', productId);
 
-            if (existingLike) {
-                await supabase.from('likes').delete().eq('id', existingLike.id);
-            } else {
-                await supabase.from('likes').insert({
-                    product_id: productId,
-                    user_id: userId
-                });
+            try {
+                const { data: existingLike, error: fetchError } = await db
+                    .from('likes')
+                    .select('*')
+                    .eq('product_id', productId)
+                    .eq('user_id', userId)
+                    .single();
+
+                if (fetchError && fetchError.code !== 'PGRST116') {
+                    // PGRST116 = "no rows found" — pas une vraie erreur ici
+                    console.error('[SaveTronik] ❌ Erreur vérification like existant :', fetchError.message);
+                }
+
+                if (existingLike) {
+                    const { error: deleteError } = await db
+                        .from('likes')
+                        .delete()
+                        .eq('id', existingLike.id);
+
+                    if (deleteError) {
+                        console.error('[SaveTronik] ❌ Erreur suppression like :', deleteError.message);
+                    } else {
+                        console.log('[SaveTronik] 💔 Like supprimé pour produit :', productId);
+                    }
+                } else {
+                    const { error: insertError } = await db
+                        .from('likes')
+                        .insert({ product_id: productId, user_id: userId });
+
+                    if (insertError) {
+                        console.error('[SaveTronik] ❌ Erreur ajout like :', insertError.message);
+                    } else {
+                        console.log('[SaveTronik] ❤️ Like ajouté pour produit :', productId);
+                    }
+                }
+
+                // Recharger pour refléter le changement
+                await loadProducts();
+
+            } catch (err) {
+                console.error('[SaveTronik] ❌ Erreur inattendue dans toggleLike() :', err);
             }
-
-            // Recharger les produits pour mettre à jour
-            loadProducts();
         }
 
-        // Filtres
+        // =========================================================
+        // FILTRES
+        // =========================================================
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 currentFilter = btn.dataset.filter;
+                console.log('[SaveTronik] 🔽 Filtre changé :', currentFilter);
                 loadProducts();
             });
         });
 
-        // Supabase Realtime pour les likes
-        supabase.channel('public:likes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'likes' }, () => {
+        // =========================================================
+        // REALTIME SUPABASE — mise à jour automatique des likes
+        // =========================================================
+        db.channel('public:likes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'likes' }, (payload) => {
+                console.log('[SaveTronik] 🔔 Changement Realtime détecté sur "likes" :', payload);
                 loadProducts();
             })
-            .subscribe();
+            .subscribe((status) => {
+                console.log('[SaveTronik] 📡 Statut abonnement Realtime :', status);
+            });
 
-        // Chargement initial
-        loadProducts();
+        // =========================================================
+        // ✅ CHARGEMENT INITIAL — après que le DOM est entièrement prêt
+        // =========================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('[SaveTronik] 🚀 DOM prêt — lancement de loadProducts()');
+            loadProducts();
+        });
     </script>
 </body>
 </html>
