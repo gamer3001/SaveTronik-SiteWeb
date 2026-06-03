@@ -242,6 +242,12 @@
                     const card = document.createElement('div');
                     card.className = 'product-card';
                     card.dataset.productId = product.id;
+                    card.style.cursor = 'pointer';
+                    card.onclick = (e) => {
+                        if (!e.target.closest('.btn-like') && !e.target.closest('button')) {
+                            window.location.href = 'produit.html?id=' + product.id;
+                        }
+                    };
                     card.innerHTML = `
                         <div class="product-image">${imageHtml}</div>
                         <div class="content">
