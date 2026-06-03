@@ -11,12 +11,14 @@
             margin: 6rem auto 2rem;
             padding: 0 2rem;
         }
+
         .product-detail-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 3rem;
             margin-top: 2rem;
         }
+
         .product-image-large {
             background: var(--bg-card);
             border-radius: 12px;
@@ -26,30 +28,36 @@
             justify-content: center;
             min-height: 400px;
         }
+
         .product-image-large img {
             max-width: 100%;
             max-height: 400px;
             object-fit: contain;
         }
+
         .product-image-large .placeholder {
             font-size: 8rem;
         }
+
         .product-info h1 {
             color: var(--primary);
             margin-bottom: 0.5rem;
         }
+
         .product-price {
             font-size: 2rem;
             color: var(--primary);
             font-weight: bold;
             margin: 1rem 0;
         }
+
         .product-original-price {
             text-decoration: line-through;
             color: var(--text-muted);
             font-size: 1.2rem;
             margin-left: 1rem;
         }
+
         .product-status {
             display: inline-block;
             padding: 0.5rem 1rem;
@@ -57,41 +65,66 @@
             font-weight: bold;
             margin-bottom: 1rem;
         }
-        .product-status.disponible { background: var(--primary); color: var(--bg-dark); }
-        .product-status.vendu { background: #ff4444; color: white; }
-        .product-status.hors-stock { background: #888; color: white; }
-        
+
+        .product-status.disponible {
+            background: var(--primary);
+            color: var(--bg-dark);
+        }
+
+        .product-status.vendu {
+            background: #ff4444;
+            color: white;
+        }
+
+        .product-status.hors-stock {
+            background: #888;
+            color: white;
+        }
+
         .product-description {
             color: var(--text-muted);
             line-height: 1.8;
             margin: 1.5rem 0;
         }
-        
+
         .product-specs {
             background: var(--bg-card);
             padding: 1.5rem;
             border-radius: 12px;
             margin: 1.5rem 0;
         }
+
         .product-specs h3 {
             color: var(--secondary);
             margin-bottom: 1rem;
         }
+
         .spec-item {
             display: flex;
             justify-content: space-between;
             padding: 0.75rem 0;
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .spec-item:last-child { border-bottom: none; }
-        .spec-label { color: var(--text-muted); }
-        .spec-value { color: var(--text); font-weight: 500; }
-        
+
+        .spec-item:last-child {
+            border-bottom: none;
+        }
+
+        .spec-label {
+            color: var(--text-muted);
+        }
+
+        .spec-value {
+            color: var(--text);
+            font-weight: 500;
+        }
+
         .product-actions {
             display: flex;
             gap: 1rem;
             margin-top: 2rem;
         }
+
         .btn-contact {
             flex: 1;
             padding: 1rem;
@@ -103,7 +136,11 @@
             text-decoration: none;
             transition: transform 0.3s;
         }
-        .btn-contact:hover { transform: translateY(-2px); }
+
+        .btn-contact:hover {
+            transform: translateY(-2px);
+        }
+
         .btn-like-detail {
             padding: 1rem 1.5rem;
             background: transparent;
@@ -114,170 +151,394 @@
             transition: all 0.3s;
             font-size: 1rem;
         }
-        .btn-like-detail:hover, .btn-like-detail.liked {
+
+        .btn-like-detail:hover,
+        .btn-like-detail.liked {
             background: var(--accent);
             color: white;
         }
-        
+
         .back-link {
             display: inline-block;
             color: var(--text-muted);
             text-decoration: none;
             margin-bottom: 1rem;
         }
-        .back-link:hover { color: var(--primary); }
-        
+
+        .back-link:hover {
+            color: var(--primary);
+        }
+
         .loading {
             text-align: center;
             padding: 4rem;
             color: var(--text-muted);
         }
-        
+
         @media (max-width: 768px) {
-            .product-detail-grid { grid-template-columns: 1fr; }
+            .product-detail-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="nav-container">
-            <a href="index.html" class="logo">
-                <img src="Images/Logo.png" alt="SaveTronik">
-                <span class="logo-text">SaveTronik</span>
-            </a>
-            <nav>
-                <ul>
-                    <li><a href="index.html">Accueil</a></li>
-                    <li><a href="presentation.html">Présentation</a></li>
-                    <li><a href="catalogue.html">Catalogue</a></li>
-                    <li><a href="contact.html">Contact & Dons</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
 
-    <main class="product-detail">
-        <a href="catalogue.html" class="back-link">← Retour au catalogue</a>
-        <div id="product-content">
-            <div class="loading">Chargement du produit...</div>
-        </div>
-    </main>
+<header>
+    <div class="nav-container">
+        <a href="index.html" class="logo">
+            <img src="Images/Logo.png" alt="SaveTronik">
+            <span class="logo-text">SaveTronik</span>
+        </a>
 
-    <footer>
-        <p>&copy; 2026 SaveTronik - Association de reconditionnement informatique</p>
-    </footer>
+        <nav>
+            <ul>
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="presentation.html">Présentation</a></li>
+                <li><a href="catalogue.html">Catalogue</a></li>
+                <li><a href="contact.html">Contact & Dons</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
 
-    <script src="config.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const { createClient } = window.supabase;
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-        
-        // Get product ID from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
-        
-        let userId = localStorage.getItem('savetronik_userid') || crypto.randomUUID();
+<main class="product-detail">
+    <a href="catalogue.html" class="back-link">← Retour au catalogue</a>
+
+    <div id="product-content">
+        <div class="loading">Chargement du produit...</div>
+    </div>
+</main>
+
+<footer>
+    <p>&copy; 2026 SaveTronik - Association de reconditionnement informatique</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+
+<script>
+window.addEventListener('error', (event) => {
+    console.error('[SaveTronik Produit] ❌ Erreur JavaScript globale :', event.error);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('[SaveTronik Produit] ❌ Promise rejetée :', event.reason);
+});
+
+console.log('[SaveTronik Produit] 🔧 Début du script');
+console.log('[SaveTronik Produit] 📦 SUPABASE_URL:', typeof SUPABASE_URL);
+console.log('[SaveTronik Produit] 📦 SUPABASE_KEY:', typeof SUPABASE_KEY);
+console.log('[SaveTronik Produit] 📦 window.supabase:', typeof window.supabase);
+
+if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_KEY === 'undefined') {
+    console.error('[SaveTronik Produit] ❌ config.js non chargé');
+
+    document.getElementById('product-content').innerHTML =
+        '<div class="loading">Erreur : configuration Supabase manquante</div>';
+
+} else if (typeof window.supabase === 'undefined') {
+    console.error('[SaveTronik Produit] ❌ CDN Supabase non chargé');
+
+    document.getElementById('product-content').innerHTML =
+        '<div class="loading">Erreur : bibliothèque Supabase manquante</div>';
+
+} else {
+
+    const db = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+    console.log('[SaveTronik Produit] ✅ Client db initialisé');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+
+    console.log('[SaveTronik Produit] 🔍 Product ID:', productId);
+    console.log('[SaveTronik Produit] 🔍 URL:', window.location.href);
+
+    let userId = localStorage.getItem('savetronik_userid');
+
+    if (!userId) {
+        userId = crypto.randomUUID();
         localStorage.setItem('savetronik_userid', userId);
-        
-        async function loadProduct() {
+    }
+
+    async function loadProduct() {
+
+        console.log('[SaveTronik Produit] 🚀 loadProduct() appelée');
+
+        try {
+
             if (!productId) {
-                document.getElementById('product-content').innerHTML = 
+                console.error('[SaveTronik Produit] ❌ Aucun productId trouvé');
+
+                document.getElementById('product-content').innerHTML =
                     '<div class="loading">Produit non trouvé</div>';
+
                 return;
             }
-            
-            const { data: product, error } = await supabase
+
+            console.log('[SaveTronik Produit] 📥 Chargement produit ID:', productId);
+
+            const {
+                data: product,
+                error: productError
+            } = await db
                 .from('produits')
                 .select('*')
                 .eq('id', productId)
                 .single();
-            
-            if (error || !product) {
-                document.getElementById('product-content').innerHTML = 
-                    '<div class="loading">Produit non trouvé</div>';
+
+            console.log('[SaveTronik Produit] 📦 Réponse produit:', product);
+
+            if (productError) {
+                console.error('[SaveTronik Produit] ❌ Erreur récupération produit:', productError);
+
+                document.getElementById('product-content').innerHTML =
+                    '<div class="loading">Erreur lors du chargement du produit</div>';
+
                 return;
             }
-            
-            // Get likes count
-            const { data: likes } = await supabase
+
+            if (!product) {
+                console.error('[SaveTronik Produit] ❌ Produit introuvable');
+
+                document.getElementById('product-content').innerHTML =
+                    '<div class="loading">Produit non trouvé</div>';
+
+                return;
+            }
+
+            console.log('[SaveTronik Produit] ✅ Produit chargé:', {
+                id: product.id,
+                nom: product.nom,
+                prix: product.prix,
+                status: product.status
+            });
+
+            console.log('[SaveTronik Produit] ❤️ Récupération des likes');
+
+            const {
+                data: likes,
+                error: likesError
+            } = await db
                 .from('likes')
                 .select('*')
                 .eq('product_id', product.id);
-            
+
+            if (likesError) {
+                console.error('[SaveTronik Produit] ❌ Erreur récupération likes:', likesError);
+            }
+
+            console.log('[SaveTronik Produit] ❤️ Likes récupérés:', likes);
+
             const likeCount = likes?.length || 0;
-            const userLiked = likes?.some(l => l.user_id === userId) || false;
-            
+            const userLiked = likes?.some(
+                like => like.user_id === userId
+            ) || false;
+
             const statusClass = product.status || 'disponible';
-            const statusLabel = statusClass === 'disponible' ? 'Disponible' 
-                : statusClass === 'vendu' ? 'Vendu' 
-                : 'Hors stock';
-            
-            const imageHtml = product.image_url 
+
+            const statusLabel =
+                statusClass === 'disponible'
+                    ? 'Disponible'
+                    : statusClass === 'vendu'
+                        ? 'Vendu'
+                        : 'Hors stock';
+
+            const imageHtml = product.image_url
                 ? `<img src="${product.image_url}" alt="${product.nom}">`
                 : `<div class="placeholder">💻</div>`;
-            
-            // Build specs from product data
+
             const specs = [];
-            if (product.annee) specs.push({ label: 'Année', value: product.annee });
-            if (product.provenance) specs.push({ label: 'Provenance', value: product.provenance });
-            if (product.marque) specs.push({ label: 'Marque', value: product.marque });
-            if (product.modele) specs.push({ label: 'Modèle', value: product.modele });
-            if (product.etat) specs.push({ label: 'État', value: product.etat });
-            if (product.garantie) specs.push({ label: 'Garantie', value: product.garantie });
-            
-            const specsHtml = specs.length > 0 
-                ? `<div class="product-specs">
-                    <h3>Caractéristiques</h3>
-                    ${specs.map(s => `<div class="spec-item"><span class="spec-label">${s.label}</span><span class="spec-value">${s.value}</span></div>`).join('')}
-                   </div>`
+
+            if (product.annee) {
+                specs.push({ label: 'Année', value: product.annee });
+            }
+
+            if (product.provenance) {
+                specs.push({ label: 'Provenance', value: product.provenance });
+            }
+
+            if (product.marque) {
+                specs.push({ label: 'Marque', value: product.marque });
+            }
+
+            if (product.modele) {
+                specs.push({ label: 'Modèle', value: product.modele });
+            }
+
+            if (product.etat) {
+                specs.push({ label: 'État', value: product.etat });
+            }
+
+            if (product.garantie) {
+                specs.push({ label: 'Garantie', value: product.garantie });
+            }
+
+            const specsHtml = specs.length
+                ? `
+                    <div class="product-specs">
+                        <h3>Caractéristiques</h3>
+                        ${specs.map(spec => `
+                            <div class="spec-item">
+                                <span class="spec-label">${spec.label}</span>
+                                <span class="spec-value">${spec.value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `
                 : '';
-            
+
             document.getElementById('product-content').innerHTML = `
                 <div class="product-detail-grid">
-                    <div class="product-image-large">${imageHtml}</div>
+                    <div class="product-image-large">
+                        ${imageHtml}
+                    </div>
+
                     <div class="product-info">
-                        <span class="product-status ${statusClass}">${statusLabel}</span>
+
+                        <span class="product-status ${statusClass}">
+                            ${statusLabel}
+                        </span>
+
                         <h1>${product.nom}</h1>
+
                         <div class="product-price">
                             ${product.prix}€
-                            ${product.prix_original ? `<span class="product-original-price">${product.prix_original}€</span>` : ''}
+
+                            ${
+                                product.prix_original
+                                    ? `<span class="product-original-price">${product.prix_original}€</span>`
+                                    : ''
+                            }
                         </div>
-                        <p class="product-description">${product.description || 'Aucune description disponible.'}</p>
+
+                        <p class="product-description">
+                            ${product.description || 'Aucune description disponible.'}
+                        </p>
+
                         ${specsHtml}
+
                         <div class="product-actions">
-                            <a href="contact.html" class="btn-contact">📩 Contacter pour acheter</a>
-                            <button class="btn-like-detail ${userLiked ? 'liked' : ''}" id="like-btn">
+
+                            <a href="contact.html" class="btn-contact">
+                                📩 Contacter pour acheter
+                            </a>
+
+                            <button
+                                id="like-btn"
+                                class="btn-like-detail ${userLiked ? 'liked' : ''}">
                                 ${userLiked ? '❤️' : '🤍'} ${likeCount} j'aime
                             </button>
+
                         </div>
+
                     </div>
                 </div>
             `;
-            
-            // Like button handler
-            document.getElementById('like-btn').addEventListener('click', async () => {
-                const { data: existingLike } = await supabase
-                    .from('likes')
-                    .select('*')
-                    .eq('product_id', productId)
-                    .eq('user_id', userId)
-                    .single();
-                
-                if (existingLike) {
-                    await supabase.from('likes').delete().eq('id', existingLike.id);
-                } else {
-                    await supabase.from('likes').insert({
-                        product_id: productId,
-                        user_id: userId
-                    });
+
+            console.log('[SaveTronik Produit] ✅ HTML injecté');
+
+            const likeButton = document.getElementById('like-btn');
+
+            if (!likeButton) {
+                console.error('[SaveTronik Produit] ❌ Bouton like introuvable après injection');
+                return;
+            }
+
+            console.log('[SaveTronik Produit] ✅ Attachement événement like');
+
+            likeButton.addEventListener('click', async () => {
+
+                try {
+
+                    console.log('[SaveTronik Produit] ❤️ Clic Like');
+
+                    const {
+                        data: existingLike,
+                        error: existingLikeError
+                    } = await db
+                        .from('likes')
+                        .select('*')
+                        .eq('product_id', productId)
+                        .eq('user_id', userId)
+                        .maybeSingle();
+
+                    if (existingLikeError) {
+                        console.error(
+                            '[SaveTronik Produit] ❌ Erreur recherche like:',
+                            existingLikeError
+                        );
+                        return;
+                    }
+
+                    if (existingLike) {
+
+                        console.log('[SaveTronik Produit] 🗑️ Suppression du like');
+
+                        const { error: deleteError } = await db
+                            .from('likes')
+                            .delete()
+                            .eq('id', existingLike.id);
+
+                        if (deleteError) {
+                            console.error(
+                                '[SaveTronik Produit] ❌ Erreur suppression like:',
+                                deleteError
+                            );
+                            return;
+                        }
+
+                    } else {
+
+                        console.log('[SaveTronik Produit] ➕ Ajout du like');
+
+                        const { error: insertError } = await db
+                            .from('likes')
+                            .insert({
+                                product_id: productId,
+                                user_id: userId
+                            });
+
+                        if (insertError) {
+                            console.error(
+                                '[SaveTronik Produit] ❌ Erreur ajout like:',
+                                insertError
+                            );
+                            return;
+                        }
+                    }
+
+                    console.log('[SaveTronik Produit] 🔄 Rechargement produit');
+                    await loadProduct();
+
+                } catch (error) {
+                    console.error(
+                        '[SaveTronik Produit] ❌ Exception bouton like:',
+                        error
+                    );
                 }
-                
-                loadProduct();
             });
+
+        } catch (error) {
+
+            console.error(
+                '[SaveTronik Produit] ❌ Exception loadProduct():',
+                error
+            );
+
+            document.getElementById('product-content').innerHTML =
+                '<div class="loading">Erreur lors du chargement du produit</div>';
         }
-        
-        loadProduct();
-    </script>
+    }
+
+    console.log('[SaveTronik Produit] 🚀 Appel initial de loadProduct()');
+    loadProduct();
+}
+</script>
+
 </body>
 </html>
