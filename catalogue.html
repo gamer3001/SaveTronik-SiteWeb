@@ -132,14 +132,18 @@
         localStorage.setItem('savetronik_userid', userId);
 
         async function loadProducts() {
+            console.log('Chargement des produits...');
             const { data: products, error } = await supabase
                 .from('produits')
                 .select('*')
                 .order('created_at', { ascending: false });
 
+            console.log('Produits:', products);
+            console.log('Erreur:', error);
+
             if (error) {
                 document.getElementById('products-grid').innerHTML = 
-                    '<div class="empty-state">Erreur de chargement. Réessayez plus tard.</div>';
+                    '<div class="empty-state">Erreur: ' + error.message + '</div>';
                 return;
             }
 
