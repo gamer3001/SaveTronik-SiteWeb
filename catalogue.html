@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalogue - SaveTronik</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .btn-like {
+            background: transparent;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-like:hover, .btn-like.liked {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-like .count {
+            font-weight: bold;
+        }
+        .status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .status.disponible { background: var(--primary); color: var(--bg-dark); }
+        .status.vendu { background: #ff4444; color: white; }
+        .status.hors-stock { background: #888; color: white; }
+        .filters {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 0.5rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--primary);
+            color: var(--bg-dark);
+            border-color: var(--primary);
+        }
+        .product-image img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="Images/Logo.png" alt="SaveTronik">
+                <span class="logo-text">SaveTronik</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="presentation.html">Présentation</a></li>
+                    <li><a href="catalogue.html">Catalogue</a></li>
+                    <li><a href="contact.html">Contact & Dons</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h1>Notre Catalogue</h1>
+            <p>Découvrez notre sélection de matériel reconditionné</p>
+        </section>
+
+        <section>
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">Tous</button>
+                <button class="filter-btn" data-filter="disponible">Disponibles</button>
+                <button class="filter-btn" data-filter="vendu">Vendus</button>
+                <button class="filter-btn" data-filter="hors-stock">Hors stock</button>
+            </div>
+            
+            <div id="products-grid" class="products-grid">
+                <div class="empty-state">Chargement des produits...</div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 SaveTronik - Association de reconditionnement informatique</p>
+        <div class="social-links">
+            <a href="#" title="Instagram">📷</a>
+            <a href="#" title="Facebook">📘</a>
+            <a href="#" title="LinkedIn">💼</a>
+        </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script>
+        const { createClient } = window.supabase;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentFilter = 'all';
+        let userId = localStorage.getItem('savetronik_userid') || crypto.randomUUID();
+        localStorage.setItem('savetronik_userid', userId);
+
+        async function loadProducts() {
+            const { data: products, error } = await supabase
+                .from('produits')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                document.getElementById('products-grid').innerHTML = 
+                    '<div class="empty-state">Erreur de chargement. Réessayez plus tard.</div>';
+                return;
+            }
+
+            if (!products || products.length === 0) {
+                document.getElementById('products-grid').innerHTML = 
+                    '<div class="empty-state">Aucun produit pour le moment. Revenez bientôt !</div>';
+                return;
+            }
+
+            renderProducts(products);
+        }
+
+        async function renderProducts(products) {
+            const grid = document.getElementById('products-grid');
+            const filtered = currentFilter === 'all' 
+                ? products 
+                : products.filter(p => p.status === currentFilter);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="empty-state">Aucun produit dans cette catégorie</div>';
+                return;
+            }
+
+            grid.innerHTML = '';
+
+            for (const product of filtered) {
+                const { data: likes } = await supabase
+                    .from('likes')
+                    .select('*')
+                    .eq('product_id', product.id);
+
+                const likeCount = likes?.length || 0;
+                const userLiked = likes?.some(l => l.user_id === userId) || false;
+
+                const statusClass = product.status || 'disponible';
+                const statusLabel = statusClass === 'disponible' ? 'Disponible' 
+                    : statusClass === 'vendu' ? 'Vendu' 
+                    : 'Hors stock';
+
+                const imageHtml = product.image_url 
+                    ? `<img src="${product.image_url}" alt="${product.nom}">`
+                    : `<div style="display:flex;align-items:center;justify-content:center;font-size:4rem;">💻</div>`;
+
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-image">${imageHtml}</div>
+                    <div class="content">
+                        <span class="status ${statusClass}">${statusLabel}</span>
+                        <h3>${product.nom}</h3>
+                        <p>${product.description || ''}</p>
+                        <span class="price">${product.prix}€</span>
+                        ${product.prix_original ? `<span class="original-price">${product.prix_original}€</span>` : ''}
+                        <div class="product-actions">
+                            <button class="btn-like ${userLiked ? 'liked' : ''}" data-id="${product.id}">
+                                <span class="heart">${userLiked ? '❤️' : '🤍'}</span>
+                                <span class="count">${likeCount}</span>
+                            </button>
+                            <button class="btn-like" style="border-color: var(--primary); color: var(--primary);" 
+                                onclick="alert('Contact: contact@savetronik.org')">
+                                📩 Contacter
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            }
+
+            // Event listeners pour les likes
+            document.querySelectorAll('.btn-like[data-id]').forEach(btn => {
+                btn.addEventListener('click', () => toggleLike(btn.dataset.id));
+            });
+        }
+
+        async function toggleLike(productId) {
+            const { data: existingLike } = await supabase
+                .from('likes')
+                .select('*')
+                .eq('product_id', productId)
+                .eq('user_id', userId)
+                .single();
+
+            if (existingLike) {
+                await supabase.from('likes').delete().eq('id', existingLike.id);
+            } else {
+                await supabase.from('likes').insert({
+                    product_id: productId,
+                    user_id: userId
+                });
+            }
+
+            // Recharger les produits pour mettre à jour
+            loadProducts();
+        }
+
+        // Filtres
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                loadProducts();
+            });
+        });
+
+        // Supabase Realtime pour les likes
+        supabase.channel('public:likes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'likes' }, () => {
+                loadProducts();
+            })
+            .subscribe();
+
+        // Chargement initial
+        loadProducts();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</body>
+</html>

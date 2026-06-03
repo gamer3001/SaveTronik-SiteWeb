@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - SaveTronik</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .admin-container { max-width: 1000px; margin: 0 auto; padding: 6rem 2rem 2rem; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .admin-header h1 { color: var(--primary); }
+        .btn-logout { background: #ff4444; color: white; padding: 0.5rem 1rem; border: none; border-radius: 8px; cursor: pointer; }
+        
+        .admin-section { background: var(--bg-card); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; }
+        .admin-section h2 { color: var(--secondary); margin-bottom: 1.5rem; }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .form-full { width: 100%; }
+        
+        .image-upload {
+            border: 2px dashed rgba(255,255,255,0.2);
+            padding: 2rem;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .image-upload:hover { border-color: var(--primary); }
+        .image-upload img { max-width: 200px; max-height: 200px; margin-top: 1rem; }
+        
+        .products-list { margin-top: 2rem; }
+        .product-item {
+            display: grid;
+            grid-template-columns: 80px 1fr 100px 100px 150px;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        .product-item img { width: 80px; height: 60px; object-fit: cover; border-radius: 4px; }
+        .product-item .status-select { padding: 0.5rem; background: var(--bg-card); border: 1px solid #333; color: white; border-radius: 4px; }
+        .btn-delete { background: #ff4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
+        .btn-edit { background: var(--primary); color: var(--bg-dark); border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
+        
+        .notification { position: fixed; top: 100px; right: 20px; padding: 1rem 2rem; border-radius: 8px; z-index: 1000; animation: slideIn 0.3s; }
+        .notification.success { background: var(--primary); color: var(--bg-dark); }
+        .notification.error { background: #ff4444; color: white; }
+        
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="Images/Logo.png" alt="SaveTronik">
+                <span class="logo-text">SaveTronik</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="catalogue.html">Catalogue</a></li>
+                    <li><a href="admin.html">Admin</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="admin-container">
+        <div class="admin-header">
+            <h1>Gestion du Catalogue</h1>
+            <button class="btn-logout" onclick="logout()">Déconnexion</button>
+        </div>
+
+        <!-- Ajouter/Modifier un produit -->
+        <div class="admin-section">
+            <h2 id="form-title">Ajouter un produit</h2>
+            <form id="product-form">
+                <input type="hidden" id="product-id">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nom du produit *</label>
+                        <input type="text" id="nom" required placeholder="Ex: Ordinateur Portable Pro">
+                    </div>
+                    <div class="form-group">
+                        <label>Prix (€) *</label>
+                        <input type="number" id="prix" required placeholder="199">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Prix original (€) - optionnel</label>
+                        <input type="number" id="prix_original" placeholder="899">
+                    </div>
+                    <div class="form-group">
+                        <label>Statut</label>
+                        <select id="status">
+                            <option value="disponible">Disponible</option>
+                            <option value="hors-stock">Hors stock</option>
+                            <option value="vendu">Vendu</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="description" rows="3" placeholder="Description du produit..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Image</label>
+                    <div class="image-upload" id="image-upload" onclick="document.getElementById('image').click()">
+                        <p>Cliquez pour uploader une image</p>
+                        <input type="file" id="image" accept="image/*" style="display:none" onchange="previewImage(this)">
+                        <img id="image-preview" style="display:none">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="submit" class="cta" id="btn-submit">Ajouter le produit</button>
+                    <button type="button" class="btn-like" style="border-color: #888; color: #888;" onclick="resetForm()">Annuler</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Liste des produits -->
+        <div class="admin-section">
+            <h2>Produits existants</h2>
+            <div id="products-list" class="products-list">Chargement...</div>
+        </div>
+    </main>
+
+    <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const { createClient } = window.supabase;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Vérifier l'admin (simple sécurité par mot de passe local)
+        const adminPassword = localStorage.getItem('savetronik_admin');
+        if (!adminPassword) {
+            const password = prompt('Mot de passe admin:');
+            if (password !== 'SaveTronik2026!') {
+                alert('Accès refusé');
+                window.location.href = 'index.html';
+            }
+            localStorage.setItem('savetronik_admin', password);
+        }
+
+        let uploadedImageUrl = null;
+
+        async function loadProducts() {
+            const { data: products, error } = await supabase
+                .from('produits')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            const list = document.getElementById('products-list');
+            
+            if (error || !products || products.length === 0) {
+                list.innerHTML = '<p>Aucun produit. Ajoutez-en un !</p>';
+                return;
+            }
+
+            list.innerHTML = products.map(p => `
+                <div class="product-item">
+                    <img src="${p.image_url || 'Images/Logo.png'}" alt="${p.nom}">
+                    <div>
+                        <strong>${p.nom}</strong><br>
+                        <small style="color: var(--text-muted)">${p.description?.substring(0, 50) || ''}...</small>
+                    </div>
+                    <div style="color: var(--primary); font-weight: bold;">${p.prix}€</div>
+                    <select class="status-select" onchange="updateStatus('${p.id}', this.value)">
+                        <option value="disponible" ${p.status === 'disponible' ? 'selected' : ''}>Dispo</option>
+                        <option value="hors-stock" ${p.status === 'hors-stock' ? 'selected' : ''}>Hors stock</option>
+                        <option value="vendu" ${p.status === 'vendu' ? 'selected' : ''}>Vendu</option>
+                    </select>
+                    <div style="display:flex;gap:0.5rem;">
+                        <button class="btn-edit" onclick="editProduct('${p.id}')">✏️</button>
+                        <button class="btn-delete" onclick="deleteProduct('${p.id}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                
+                // Upload vers Supabase Storage
+                const fileName = `${Date.now()}_${file.name}`;
+                const { data, error } = await supabase.storage
+                    .from('products')
+                    .upload(fileName, file);
+
+                if (error) {
+                    // Si le bucket n'existe pas, on utilise une URL externe ou on ignore
+                    alert('Erreur upload image: ' + error.message);
+                    return;
+                }
+
+                const { data: urlData } = supabase.storage
+                    .from('products')
+                    .getPublicUrl(fileName);
+                
+                uploadedImageUrl = urlData.publicUrl;
+                document.getElementById('image-preview').src = uploadedImageUrl;
+                document.getElementById('image-preview').style.display = 'block';
+            }
+        }
+
+        document.getElementById('product-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const productData = {
+                nom: document.getElementById('nom').value,
+                prix: parseFloat(document.getElementById('prix').value),
+                prix_original: document.getElementById('prix_original').value ? parseFloat(document.getElementById('prix_original').value) : null,
+                description: document.getElementById('description').value,
+                status: document.getElementById('status').value,
+                image_url: uploadedImageUrl
+            };
+
+            const productId = document.getElementById('product-id').value;
+
+            let result;
+            if (productId) {
+                result = await supabase.from('produits').update(productData).eq('id', productId);
+                showNotification('Produit modifié !', 'success');
+            } else {
+                result = await supabase.from('produits').insert(productData);
+                showNotification('Produit ajouté !', 'success');
+            }
+
+            if (result.error) {
+                showNotification('Erreur: ' + result.error.message, 'error');
+            } else {
+                resetForm();
+                loadProducts();
+            }
+        });
+
+        async function updateStatus(id, status) {
+            await supabase.from('produits').update({ status }).eq('id', id);
+            showNotification('Statut mis à jour', 'success');
+        }
+
+        async function deleteProduct(id) {
+            if (confirm('Supprimer ce produit ?')) {
+                await supabase.from('produits').delete().eq('id', id);
+                await supabase.from('likes').delete().eq('product_id', id);
+                loadProducts();
+                showNotification('Produit supprimé', 'success');
+            }
+        }
+
+        async function editProduct(id) {
+            const { data } = await supabase.from('produits').select('*').eq('id', id).single();
+            if (data) {
+                document.getElementById('product-id').value = data.id;
+                document.getElementById('nom').value = data.nom;
+                document.getElementById('prix').value = data.prix;
+                document.getElementById('prix_original').value = data.prix_original || '';
+                document.getElementById('description').value = data.description || '';
+                document.getElementById('status').value = data.status;
+                document.getElementById('form-title').textContent = 'Modifier le produit';
+                document.getElementById('btn-submit').textContent = 'Enregistrer';
+                
+                if (data.image_url) {
+                    uploadedImageUrl = data.image_url;
+                    document.getElementById('image-preview').src = data.image_url;
+                    document.getElementById('image-preview').style.display = 'block';
+                }
+                
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('product-form').reset();
+            document.getElementById('product-id').value = '';
+            document.getElementById('form-title').textContent = 'Ajouter un produit';
+            document.getElementById('btn-submit').textContent = 'Ajouter le produit';
+            uploadedImageUrl = null;
+            document.getElementById('image-preview').style.display = 'none';
+        }
+
+        function logout() {
+            localStorage.removeItem('savetronik_admin');
+            window.location.reload();
+        }
+
+        function showNotification(message, type) {
+            const notif = document.createElement('div');
+            notif.className = `notification ${type}`;
+            notif.textContent = message;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
+        }
+
+        loadProducts();
+    </script>
+</body>
+</html>

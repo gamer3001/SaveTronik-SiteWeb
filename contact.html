@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact & Dons - SaveTronik</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="Images/Logo.png" alt="SaveTronik">
+                <span class="logo-text">SaveTronik</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="presentation.html">Présentation</a></li>
+                    <li><a href="contact.html">Contact & Dons</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h1>Contactez-nous</h1>
+            <p>Une question ? Un don de matériel ? Rejoignez-nous dans notre mission</p>
+        </section>
+
+        <section>
+            <div class="contact-container">
+                <div class="contact-form">
+                    <h2>Envoyez-nous un message</h2>
+                    <form action="#" method="POST">
+                        <div class="form-group">
+                            <label for="name">Nom complet</label>
+                            <input type="text" id="name" name="name" required placeholder="Votre nom">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required placeholder="votre@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="type">Type de demande</label>
+                            <select id="type" name="type">
+                                <option value="achat">Achat de matériel</option>
+                                <option value="don">Don de matériel</option>
+                                <option value="partenariat">Partenariat entreprise</option>
+                                <option value="association">Demande association</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea id="message" name="message" required placeholder="Décrivez votre demande..."></textarea>
+                        </div>
+                        <button type="submit" class="btn-submit">Envoyer le message</button>
+                    </form>
+                </div>
+
+                <div>
+                    <div class="don-section">
+                        <h3>💝 Soutenez-nous</h3>
+                        <p>Vos dons nous permettent de continuer notre mission et d'aider les associations dans le besoin.</p>
+                        
+                        <div class="don-options">
+                            <div class="don-option">
+                                <div class="amount">10€</div>
+                                <p>Un cable USB</p>
+                            </div>
+                            <div class="don-option">
+                                <div class="amount">25€</div>
+                                <p>Une souris</p>
+                            </div>
+                            <div class="don-option">
+                                <div class="amount">50€</div>
+                                <p>Un clavier</p>
+                            </div>
+                        </div>
+
+                        <p style="font-size: 0.9rem; color: var(--text-muted);">💳 Paiement sécurisé via Stripe - Coming soon</p>
+                    </div>
+
+                    <div style="margin-top: 2rem; background: var(--bg-card); padding: 2rem; border-radius: 12px;">
+                        <h3>📍 Nos coordonnées</h3>
+                        <div style="margin-top: 1rem; color: var(--text-muted);">
+                            <p><strong>Email:</strong> contact@savetronik.org</p>
+                            <p><strong>Téléphone:</strong> 01 23 45 67 89</p>
+                            <p><strong>Adresse:</strong> [À compléter]</p>
+                        </div>
+
+                        <h3 style="margin-top: 1.5rem;">⏰ Horaires</h3>
+                        <div style="margin-top: 0.5rem; color: var(--text-muted);">
+                            <p>Lundi - Vendredi: 9h - 18h</p>
+                            <p>Samedi: 10h - 16h</p>
+                            <p>Dimanche: Fermé</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Vous voulez donner du matériel ?</h2>
+            <div class="products-grid">
+                <div class="product-card">
+                    <div class="image">🏢</div>
+                    <div class="content">
+                        <h3>Entreprise</h3>
+                        <p>Vous êtes une entreprise et vous avez du matériel à donner ? Nous venons chercher tout type d'équipement informatique dans toute la France.</p>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <div class="image">👤</div>
+                    <div class="content">
+                        <h3>Particulier</h3>
+                        <p>Vous avez un vieil ordinateur qui prend la poussière ? Nous l'acceptons aussi ! Déposez-le ou venez nous le bringe.</p>
+                    </div>
+                </div>
+                <div class="product-card">
+                    <div class="image">🏫</div>
+                    <div class="content">
+                        <h3>École / Association</h3>
+                        <p>Vous devez renouveler votre parc ? Nous rachetons aussi votre ancien matériel à prix préférentiel.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section style="text-align: center;">
+            <h2>FAQ</h2>
+            <div style="max-width: 800px; margin: 0 auto; text-align: left;">
+                <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem;">
+                    <h3 style="color: var(--primary); margin-bottom: 0.5rem;">Quel type de matériel acceptez-vous ?</h3>
+                    <p style="color: var(--text-muted);">Nous acceptons ordinateurs fixes et portables, imprimantes, écrans, clavier/souris, cables, composants, etc. Tout ce qui fonctionne ou peut être réparé.</p>
+                </div>
+                <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem;">
+                    <h3 style="color: var(--primary); margin-bottom: 0.5rem;">Proposez-vous des garanties ?</h3>
+                    <p style="color: var(--text-muted);">Oui ! Tout notre matériel est garanti 3 mois minimum. Les produits Grade A ont 6 mois de garantie.</p>
+                </div>
+                <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem;">
+                    <h3 style="color: var(--primary); margin-bottom: 0.5rem;">Livrez-vous ?</h3>
+                    <p style="color: var(--text-muted);">Currently, we offer local pickup. Delivery throughout France coming soon!</p>
+                </div>
+                <div style="background: var(--bg-card); padding: 1.5rem; border-radius: 12px;">
+                    <h3 style="color: var(--primary); margin-bottom: 0.5rem;">Comment devenir bénévole ?</h3>
+                    <p style="color: var(--text-muted);">Contactez-nous via le formulaire ! Nous avons toujours besoin d'aide pour le reconditionnement, la collecte et la communication.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 SaveTronik - Association de reconditionnement informatique</p>
+        <div class="social-links">
+            <a href="#" title="Instagram">📷</a>
+            <a href="#" title="Facebook">📘</a>
+            <a href="#" title="LinkedIn">💼</a>
+        </div>
+    </footer>
+</body>
+</html>
