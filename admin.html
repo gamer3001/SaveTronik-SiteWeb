@@ -10,13 +10,13 @@
         .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
         .admin-header h1 { color: var(--primary); }
         .btn-logout { background: #ff4444; color: white; padding: 0.5rem 1rem; border: none; border-radius: 8px; cursor: pointer; }
-        
+
         .admin-section { background: var(--bg-card); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; }
         .admin-section h2 { color: var(--secondary); margin-bottom: 1.5rem; }
-        
+
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
         .form-full { width: 100%; }
-        
+
         .image-upload {
             border: 2px dashed rgba(255,255,255,0.2);
             padding: 2rem;
@@ -27,7 +27,7 @@
         }
         .image-upload:hover { border-color: var(--primary); }
         .image-upload img { max-width: 200px; max-height: 200px; margin-top: 1rem; }
-        
+
         .products-list { margin-top: 2rem; }
         .product-item {
             display: grid;
@@ -43,11 +43,11 @@
         .product-item .status-select { padding: 0.5rem; background: var(--bg-card); border: 1px solid #333; color: white; border-radius: 4px; }
         .btn-delete { background: #ff4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
         .btn-edit { background: var(--primary); color: var(--bg-dark); border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
-        
+
         .notification { position: fixed; top: 100px; right: 20px; padding: 1rem 2rem; border-radius: 8px; z-index: 1000; animation: slideIn 0.3s; }
         .notification.success { background: var(--primary); color: var(--bg-dark); }
         .notification.error { background: #ff4444; color: white; }
-        
+
         @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
     </style>
 </head>
@@ -79,7 +79,7 @@
             <h2 id="form-title">Ajouter un produit</h2>
             <form id="product-form">
                 <input type="hidden" id="product-id">
-                
+
                 <div class="form-row">
                     <div class="form-group">
                         <label>Nom du produit *</label>
@@ -90,7 +90,7 @@
                         <input type="number" id="prix" required placeholder="199">
                     </div>
                 </div>
-                
+
                 <div class="form-row">
                     <div class="form-group">
                         <label>Prix original (€) - optionnel</label>
@@ -105,12 +105,12 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label>Description</label>
                     <textarea id="description" rows="3" placeholder="Description du produit..."></textarea>
                 </div>
-                
+
                 <div class="form-group">
                     <label>Image</label>
                     <div class="image-upload" id="image-upload" onclick="document.getElementById('image').click()">
@@ -119,7 +119,7 @@
                         <img id="image-preview" style="display:none">
                     </div>
                 </div>
-                
+
                 <div style="display: flex; gap: 1rem; margin-top: 1rem;">
                     <button type="submit" class="cta" id="btn-submit">Ajouter le produit</button>
                     <button type="button" class="btn-like" style="border-color: #888; color: #888;" onclick="resetForm()">Annuler</button>
@@ -134,152 +134,267 @@
         </div>
     </main>
 
+    <!-- ✅ CDN Supabase : injecte window.supabase, NE PAS redéclarer 'supabase' après -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <script>
-        const { createClient } = window.supabase;
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        // =========================================================
+        // ✅ FIX CRITIQUE : on utilise "db" au lieu de "supabase"
+        // pour éviter le conflit avec window.supabase (CDN global)
+        // =========================================================
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Vérifier l'admin (simple sécurité par mot de passe local)
+        console.log('[SaveTronik Admin] ✅ Client Supabase initialisé (db)');
+
+        // =========================================================
+        // VÉRIFICATION ACCÈS ADMIN (mot de passe local)
+        // =========================================================
         const adminPassword = localStorage.getItem('savetronik_admin');
         if (!adminPassword) {
-            const password = prompt('Mot de passe admin:');
+            const password = prompt('Mot de passe admin :');
             if (password !== 'SaveTronik2026!') {
                 alert('Accès refusé');
                 window.location.href = 'index.html';
+            } else {
+                localStorage.setItem('savetronik_admin', password);
+                console.log('[SaveTronik Admin] ✅ Accès admin accordé');
             }
-            localStorage.setItem('savetronik_admin', password);
+        } else {
+            console.log('[SaveTronik Admin] ✅ Session admin existante trouvée');
         }
 
         let uploadedImageUrl = null;
 
+        // =========================================================
+        // CHARGEMENT DE LA LISTE DES PRODUITS (admin)
+        // =========================================================
         async function loadProducts() {
-            const { data: products, error } = await supabase
-                .from('produits')
-                .select('*')
-                .order('created_at', { ascending: false });
+            console.log('[SaveTronik Admin] 🔄 loadProducts() appelée');
 
             const list = document.getElementById('products-list');
-            
-            if (error || !products || products.length === 0) {
-                list.innerHTML = '<p>Aucun produit. Ajoutez-en un !</p>';
+            if (!list) {
+                console.error('[SaveTronik Admin] ❌ Élément #products-list introuvable dans le DOM !');
                 return;
             }
 
-            list.innerHTML = products.map(p => `
-                <div class="product-item">
-                    <img src="${p.image_url || 'Images/Logo.png'}" alt="${p.nom}">
-                    <div>
-                        <strong>${p.nom}</strong><br>
-                        <small style="color: var(--text-muted)">${p.description?.substring(0, 50) || ''}...</small>
+            list.innerHTML = '<p>Chargement...</p>';
+
+            try {
+                const { data: products, error } = await db
+                    .from('produits')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.error('[SaveTronik Admin] ❌ Erreur Supabase (SELECT produits) :', error.message, error);
+                    list.innerHTML = `<p style="color:#ff4444;">Erreur : ${error.message}</p>`;
+                    return;
+                }
+
+                console.log('[SaveTronik Admin] ✅ Produits reçus :', products?.length ?? 0, 'produit(s)', products);
+
+                if (!products || products.length === 0) {
+                    list.innerHTML = '<p>Aucun produit. Ajoutez-en un !</p>';
+                    return;
+                }
+
+                list.innerHTML = products.map(p => `
+                    <div class="product-item">
+                        <img src="${p.image_url || 'Images/Logo.png'}" alt="${p.nom}">
+                        <div>
+                            <strong>${p.nom}</strong><br>
+                            <small style="color: var(--text-muted)">${p.description?.substring(0, 50) || ''}...</small>
+                        </div>
+                        <div style="color: var(--primary); font-weight: bold;">${p.prix}€</div>
+                        <select class="status-select" onchange="updateStatus('${p.id}', this.value)">
+                            <option value="disponible" ${p.status === 'disponible' ? 'selected' : ''}>Dispo</option>
+                            <option value="hors-stock" ${p.status === 'hors-stock' ? 'selected' : ''}>Hors stock</option>
+                            <option value="vendu" ${p.status === 'vendu' ? 'selected' : ''}>Vendu</option>
+                        </select>
+                        <div style="display:flex;gap:0.5rem;">
+                            <button class="btn-edit" onclick="editProduct('${p.id}')">✏️</button>
+                            <button class="btn-delete" onclick="deleteProduct('${p.id}')">🗑️</button>
+                        </div>
                     </div>
-                    <div style="color: var(--primary); font-weight: bold;">${p.prix}€</div>
-                    <select class="status-select" onchange="updateStatus('${p.id}', this.value)">
-                        <option value="disponible" ${p.status === 'disponible' ? 'selected' : ''}>Dispo</option>
-                        <option value="hors-stock" ${p.status === 'hors-stock' ? 'selected' : ''}>Hors stock</option>
-                        <option value="vendu" ${p.status === 'vendu' ? 'selected' : ''}>Vendu</option>
-                    </select>
-                    <div style="display:flex;gap:0.5rem;">
-                        <button class="btn-edit" onclick="editProduct('${p.id}')">✏️</button>
-                        <button class="btn-delete" onclick="deleteProduct('${p.id}')">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
+                `).join('');
+
+                console.log('[SaveTronik Admin] ✅ Liste rendue avec succès');
+
+            } catch (err) {
+                console.error('[SaveTronik Admin] ❌ Erreur inattendue dans loadProducts() :', err);
+                list.innerHTML = `<p style="color:#ff4444;">Erreur inattendue : ${err.message}</p>`;
+            }
         }
 
+        // =========================================================
+        // UPLOAD ET PRÉVISUALISATION D'IMAGE
+        // =========================================================
         async function previewImage(input) {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
-                
-                // Upload vers Supabase Storage
+                console.log('[SaveTronik Admin] 🖼️ Upload image :', file.name, '(', file.size, 'octets)');
+
                 const fileName = `${Date.now()}_${file.name}`;
-                const { data, error } = await supabase.storage
+                const { data, error } = await db.storage
                     .from('products')
                     .upload(fileName, file);
 
                 if (error) {
-                    // Si le bucket n'existe pas, on utilise une URL externe ou on ignore
-                    alert('Erreur upload image: ' + error.message);
+                    console.error('[SaveTronik Admin] ❌ Erreur upload image :', error.message, error);
+                    showNotification('Erreur upload image : ' + error.message, 'error');
                     return;
                 }
 
-                const { data: urlData } = supabase.storage
+                const { data: urlData } = db.storage
                     .from('products')
                     .getPublicUrl(fileName);
-                
+
                 uploadedImageUrl = urlData.publicUrl;
+                console.log('[SaveTronik Admin] ✅ Image uploadée, URL publique :', uploadedImageUrl);
+
                 document.getElementById('image-preview').src = uploadedImageUrl;
                 document.getElementById('image-preview').style.display = 'block';
             }
         }
 
+        // =========================================================
+        // SOUMISSION DU FORMULAIRE (ajout ou modification)
+        // =========================================================
         document.getElementById('product-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const productData = {
                 nom: document.getElementById('nom').value,
                 prix: parseFloat(document.getElementById('prix').value),
-                prix_original: document.getElementById('prix_original').value ? parseFloat(document.getElementById('prix_original').value) : null,
+                prix_original: document.getElementById('prix_original').value
+                    ? parseFloat(document.getElementById('prix_original').value)
+                    : null,
                 description: document.getElementById('description').value,
                 status: document.getElementById('status').value,
                 image_url: uploadedImageUrl
             };
 
             const productId = document.getElementById('product-id').value;
+            console.log('[SaveTronik Admin] 💾 Soumission formulaire — mode :', productId ? 'modification' : 'ajout', productData);
 
-            let result;
-            if (productId) {
-                result = await supabase.from('produits').update(productData).eq('id', productId);
-                showNotification('Produit modifié !', 'success');
-            } else {
-                result = await supabase.from('produits').insert(productData);
-                showNotification('Produit ajouté !', 'success');
-            }
-
-            if (result.error) {
-                showNotification('Erreur: ' + result.error.message, 'error');
-            } else {
-                resetForm();
-                loadProducts();
+            try {
+                let result;
+                if (productId) {
+                    result = await db.from('produits').update(productData).eq('id', productId);
+                    if (result.error) {
+                        console.error('[SaveTronik Admin] ❌ Erreur UPDATE produit :', result.error.message);
+                        showNotification('Erreur : ' + result.error.message, 'error');
+                    } else {
+                        console.log('[SaveTronik Admin] ✅ Produit modifié avec succès');
+                        showNotification('Produit modifié !', 'success');
+                        resetForm();
+                        loadProducts();
+                    }
+                } else {
+                    result = await db.from('produits').insert(productData);
+                    if (result.error) {
+                        console.error('[SaveTronik Admin] ❌ Erreur INSERT produit :', result.error.message);
+                        showNotification('Erreur : ' + result.error.message, 'error');
+                    } else {
+                        console.log('[SaveTronik Admin] ✅ Produit ajouté avec succès');
+                        showNotification('Produit ajouté !', 'success');
+                        resetForm();
+                        loadProducts();
+                    }
+                }
+            } catch (err) {
+                console.error('[SaveTronik Admin] ❌ Erreur inattendue soumission formulaire :', err);
+                showNotification('Erreur inattendue : ' + err.message, 'error');
             }
         });
 
+        // =========================================================
+        // MISE À JOUR DU STATUT
+        // =========================================================
         async function updateStatus(id, status) {
-            await supabase.from('produits').update({ status }).eq('id', id);
-            showNotification('Statut mis à jour', 'success');
+            console.log('[SaveTronik Admin] 🔄 updateStatus() — produit :', id, '→', status);
+
+            const { error } = await db.from('produits').update({ status }).eq('id', id);
+
+            if (error) {
+                console.error('[SaveTronik Admin] ❌ Erreur updateStatus :', error.message);
+                showNotification('Erreur mise à jour statut : ' + error.message, 'error');
+            } else {
+                console.log('[SaveTronik Admin] ✅ Statut mis à jour');
+                showNotification('Statut mis à jour', 'success');
+            }
         }
 
+        // =========================================================
+        // SUPPRESSION D'UN PRODUIT
+        // =========================================================
         async function deleteProduct(id) {
-            if (confirm('Supprimer ce produit ?')) {
-                await supabase.from('produits').delete().eq('id', id);
-                await supabase.from('likes').delete().eq('product_id', id);
-                loadProducts();
-                showNotification('Produit supprimé', 'success');
-            }
-        }
+            if (!confirm('Supprimer ce produit ?')) return;
 
-        async function editProduct(id) {
-            const { data } = await supabase.from('produits').select('*').eq('id', id).single();
-            if (data) {
-                document.getElementById('product-id').value = data.id;
-                document.getElementById('nom').value = data.nom;
-                document.getElementById('prix').value = data.prix;
-                document.getElementById('prix_original').value = data.prix_original || '';
-                document.getElementById('description').value = data.description || '';
-                document.getElementById('status').value = data.status;
-                document.getElementById('form-title').textContent = 'Modifier le produit';
-                document.getElementById('btn-submit').textContent = 'Enregistrer';
-                
-                if (data.image_url) {
-                    uploadedImageUrl = data.image_url;
-                    document.getElementById('image-preview').src = data.image_url;
-                    document.getElementById('image-preview').style.display = 'block';
+            console.log('[SaveTronik Admin] 🗑️ deleteProduct() — id :', id);
+
+            try {
+                const { error: likesError } = await db.from('likes').delete().eq('product_id', id);
+                if (likesError) {
+                    console.warn('[SaveTronik Admin] ⚠️ Erreur suppression likes associés :', likesError.message);
                 }
-                
-                window.scrollTo(0, 0);
+
+                const { error: prodError } = await db.from('produits').delete().eq('id', id);
+                if (prodError) {
+                    console.error('[SaveTronik Admin] ❌ Erreur suppression produit :', prodError.message);
+                    showNotification('Erreur suppression : ' + prodError.message, 'error');
+                } else {
+                    console.log('[SaveTronik Admin] ✅ Produit supprimé');
+                    showNotification('Produit supprimé', 'success');
+                    loadProducts();
+                }
+            } catch (err) {
+                console.error('[SaveTronik Admin] ❌ Erreur inattendue deleteProduct() :', err);
             }
         }
 
+        // =========================================================
+        // ÉDITION D'UN PRODUIT
+        // =========================================================
+        async function editProduct(id) {
+            console.log('[SaveTronik Admin] ✏️ editProduct() — id :', id);
+
+            try {
+                const { data, error } = await db.from('produits').select('*').eq('id', id).single();
+
+                if (error) {
+                    console.error('[SaveTronik Admin] ❌ Erreur chargement produit pour édition :', error.message);
+                    showNotification('Erreur : ' + error.message, 'error');
+                    return;
+                }
+
+                if (data) {
+                    document.getElementById('product-id').value = data.id;
+                    document.getElementById('nom').value = data.nom;
+                    document.getElementById('prix').value = data.prix;
+                    document.getElementById('prix_original').value = data.prix_original || '';
+                    document.getElementById('description').value = data.description || '';
+                    document.getElementById('status').value = data.status;
+                    document.getElementById('form-title').textContent = 'Modifier le produit';
+                    document.getElementById('btn-submit').textContent = 'Enregistrer';
+
+                    if (data.image_url) {
+                        uploadedImageUrl = data.image_url;
+                        document.getElementById('image-preview').src = data.image_url;
+                        document.getElementById('image-preview').style.display = 'block';
+                    }
+
+                    window.scrollTo(0, 0);
+                    console.log('[SaveTronik Admin] ✅ Formulaire pré-rempli pour :', data.nom);
+                }
+            } catch (err) {
+                console.error('[SaveTronik Admin] ❌ Erreur inattendue editProduct() :', err);
+            }
+        }
+
+        // =========================================================
+        // RÉINITIALISATION DU FORMULAIRE
+        // =========================================================
         function resetForm() {
             document.getElementById('product-form').reset();
             document.getElementById('product-id').value = '';
@@ -287,13 +402,21 @@
             document.getElementById('btn-submit').textContent = 'Ajouter le produit';
             uploadedImageUrl = null;
             document.getElementById('image-preview').style.display = 'none';
+            console.log('[SaveTronik Admin] 🔁 Formulaire réinitialisé');
         }
 
+        // =========================================================
+        // DÉCONNEXION
+        // =========================================================
         function logout() {
             localStorage.removeItem('savetronik_admin');
+            console.log('[SaveTronik Admin] 👋 Déconnexion admin');
             window.location.reload();
         }
 
+        // =========================================================
+        // NOTIFICATION VISUELLE
+        // =========================================================
         function showNotification(message, type) {
             const notif = document.createElement('div');
             notif.className = `notification ${type}`;
@@ -302,7 +425,13 @@
             setTimeout(() => notif.remove(), 3000);
         }
 
-        loadProducts();
+        // =========================================================
+        // ✅ CHARGEMENT INITIAL — après que le DOM est entièrement prêt
+        // =========================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('[SaveTronik Admin] 🚀 DOM prêt — lancement de loadProducts()');
+            loadProducts();
+        });
     </script>
 </body>
 </html>
