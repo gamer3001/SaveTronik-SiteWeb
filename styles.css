@@ -431,3 +431,100 @@ footer p {
         grid-template-columns: 1fr;
     }
 }
+/* =========================================================
+   MENU HAMBURGER MOBILE
+   ========================================================= */
+
+/* Bouton hamburger — caché sur desktop */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.4rem;
+    z-index: 200;
+}
+
+.hamburger span {
+    display: block;
+    width: 26px;
+    height: 2px;
+    background: var(--primary);
+    border-radius: 2px;
+    transition: transform 0.3s, opacity 0.3s;
+    transform-origin: center;
+}
+
+/* Animation croix quand menu ouvert */
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+@media (max-width: 768px) {
+    /* Header en ligne logo + hamburger */
+    header {
+        padding: 0.85rem 1.25rem;
+    }
+
+    .nav-container {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 0;
+    }
+
+    .hamburger {
+        display: flex;
+    }
+
+    /* Le <nav> devient un drawer qui glisse du haut */
+    nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: rgba(10, 10, 15, 0.98);
+        backdrop-filter: blur(12px);
+        padding: 5rem 2rem 2rem;
+        transform: translateY(-110%);
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 150;
+        border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+    }
+
+    nav.open {
+        transform: translateY(0);
+    }
+
+    nav ul {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    nav ul li {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    nav ul li:last-child {
+        border-bottom: none;
+    }
+
+    nav a {
+        display: block;
+        padding: 1rem 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    nav a::after {
+        display: none;
+    }
+
+    /* Correction padding body pour le header plus petit */
+    main {
+        padding-top: 5rem;
+    }
+}

@@ -363,6 +363,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     await checkAuth();
     updateAuthUI();
     if (currentUser) await loadPanierFromSupabase();
+    initHamburger();
 });
+
+// =========================================================
+// MENU HAMBURGER MOBILE
+// =========================================================
+function initHamburger() {
+    const nav = document.querySelector('header nav');
+    const navContainer = document.querySelector('.nav-container');
+    if (!nav || !navContainer) return;
+
+    // Créer le bouton hamburger s'il n'existe pas déjà
+    if (document.querySelector('.hamburger')) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'hamburger';
+    btn.setAttribute('aria-label', 'Menu');
+    btn.innerHTML = '<span></span><span></span><span></span>';
+    navContainer.appendChild(btn);
+
+    // Toggle menu
+    btn.addEventListener('click', () => {
+        const isOpen = nav.classList.toggle('open');
+        btn.classList.toggle('open', isOpen);
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+    });
+
+    // Fermer en cliquant sur un lien
+    nav.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            nav.classList.remove('open');
+            btn.classList.remove('open');
+            document.body.style.overflow = '';
+        });
+    });
+
+    // Fermer en cliquant en dehors
+    document.addEventListener('click', (e) => {
+        if (!nav.contains(e.target) && !btn.contains(e.target)) {
+            nav.classList.remove('open');
+            btn.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+    });
+}
 
 console.log('[SaveTronik Auth] ✅ Module chargé');
