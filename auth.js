@@ -240,6 +240,24 @@ function updateAuthUI() {
         }
     }
     updatePanierBadge();
+    updateAdminButton();
+}
+
+function updateAdminButton() {
+    const ADMIN_EMAIL = 'admin@savetronik.org';
+    // Supprimer un éventuel bouton admin déjà injecté
+    const existing = document.getElementById('admin-nav-link');
+    if (existing) existing.parentElement.remove();
+
+    if (currentUser && currentUser.email === ADMIN_EMAIL) {
+        // Trouver la liste de nav
+        const navUl = document.querySelector('nav ul');
+        if (!navUl) return;
+        const li = document.createElement('li');
+        li.innerHTML = '<a href="admin.html" id="admin-nav-link" style="color:var(--accent);font-weight:bold;">⚙️ Admin</a>';
+        navUl.appendChild(li);
+        console.log('[SaveTronik Auth] ✅ Bouton admin affiché');
+    }
 }
 
 function showNotification(message, type = 'success') {

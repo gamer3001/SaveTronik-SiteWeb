@@ -175,33 +175,40 @@
         </div>
     </main>
 
-    <!-- ✅ CDN Supabase : injecte window.supabase, NE PAS redéclarer 'supabase' après -->
+    <!-- ✅ CDN Supabase + auth.js (crée window.db) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="auth.js"></script>
     <script>
-        // =========================================================
-        // ✅ FIX CRITIQUE : on utilise "db" au lieu de "supabase"
-        // pour éviter le conflit avec window.supabase (CDN global)
-        // =========================================================
-        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        console.log('[SaveTronik Admin] ✅ Client Supabase initialisé (db)');
+        // ✅ window.db est créé par auth.js
 
         // =========================================================
-        // VÉRIFICATION ACCÈS ADMIN (mot de passe local)
+        // VÉRIFICATION ACCÈS ADMIN via session Supabase
         // =========================================================
-        const adminPassword = localStorage.getItem('savetronik_admin');
-        if (!adminPassword) {
-            const password = prompt('Mot de passe admin :');
-            if (password !== 'SaveTronik2026!') {
-                alert('Accès refusé');
+        const ADMIN_EMAIL = 'admin@savetronik.org';
+
+        async function verifierAdmin() {
+            const session = localStorage.getItem('savetronik_session');
+            if (!session) {
+                alert('Accès refusé : vous devez être connecté.');
                 window.location.href = 'index.html';
-            } else {
-                localStorage.setItem('savetronik_admin', password);
-                console.log('[SaveTronik Admin] ✅ Accès admin accordé');
+                return false;
             }
-        } else {
-            console.log('[SaveTronik Admin] ✅ Session admin existante trouvée');
+            try {
+                const sessionData = JSON.parse(session);
+                const { data, error } = await window.db.auth.getUser(sessionData.access_token);
+                if (error || !data.user || data.user.email !== ADMIN_EMAIL) {
+                    alert('Accès refusé : compte non administrateur.');
+                    window.location.href = 'index.html';
+                    return false;
+                }
+                console.log('[SaveTronik Admin] ✅ Accès admin accordé pour :', data.user.email);
+                return true;
+            } catch (e) {
+                alert('Session invalide. Reconnectez-vous.');
+                window.location.href = 'index.html';
+                return false;
+            }
         }
 
         let uploadedImageUrl = null;
@@ -221,7 +228,7 @@
             list.innerHTML = '<p>Chargement...</p>';
 
             try {
-                const { data: products, error } = await db
+                const { data: products, error } = await window.db
                     .from('produits')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -276,7 +283,7 @@
                 console.log('[SaveTronik Admin] 🖼️ Upload image :', file.name, '(', file.size, 'octets)');
 
                 const fileName = `${Date.now()}_${file.name}`;
-                const { data, error } = await db.storage
+                const { data, error } = await window.db.storage
                     .from('products')
                     .upload(fileName, file);
 
@@ -286,7 +293,7 @@
                     return;
                 }
 
-                const { data: urlData } = db.storage
+                const { data: urlData } = window.db.storage
                     .from('products')
                     .getPublicUrl(fileName);
 
@@ -327,7 +334,7 @@
             try {
                 let result;
                 if (productId) {
-                    result = await db.from('produits').update(productData).eq('id', productId);
+                    result = await window.db.from('produits').update(productData).eq('id', productId);
                     if (result.error) {
                         console.error('[SaveTronik Admin] ❌ Erreur UPDATE produit :', result.error.message);
                         showNotification('Erreur : ' + result.error.message, 'error');
@@ -338,7 +345,7 @@
                         loadProducts();
                     }
                 } else {
-                    result = await db.from('produits').insert(productData);
+                    result = await window.db.from('produits').insert(productData);
                     if (result.error) {
                         console.error('[SaveTronik Admin] ❌ Erreur INSERT produit :', result.error.message);
                         showNotification('Erreur : ' + result.error.message, 'error');
@@ -361,7 +368,7 @@
         async function updateStatus(id, status) {
             console.log('[SaveTronik Admin] 🔄 updateStatus() — produit :', id, '→', status);
 
-            const { error } = await db.from('produits').update({ status }).eq('id', id);
+            const { error } = await window.db.from('produits').update({ status }).eq('id', id);
 
             if (error) {
                 console.error('[SaveTronik Admin] ❌ Erreur updateStatus :', error.message);
@@ -381,12 +388,12 @@
             console.log('[SaveTronik Admin] 🗑️ deleteProduct() — id :', id);
 
             try {
-                const { error: likesError } = await db.from('likes').delete().eq('product_id', id);
+                const { error: likesError } = await window.db.from('likes').delete().eq('product_id', id);
                 if (likesError) {
                     console.warn('[SaveTronik Admin] ⚠️ Erreur suppression likes associés :', likesError.message);
                 }
 
-                const { error: prodError } = await db.from('produits').delete().eq('id', id);
+                const { error: prodError } = await window.db.from('produits').delete().eq('id', id);
                 if (prodError) {
                     console.error('[SaveTronik Admin] ❌ Erreur suppression produit :', prodError.message);
                     showNotification('Erreur suppression : ' + prodError.message, 'error');
@@ -407,7 +414,7 @@
             console.log('[SaveTronik Admin] ✏️ editProduct() — id :', id);
 
             try {
-                const { data, error } = await db.from('produits').select('*').eq('id', id).single();
+                const { data, error } = await window.db.from('produits').select('*').eq('id', id).single();
 
                 if (error) {
                     console.error('[SaveTronik Admin] ❌ Erreur chargement produit pour édition :', error.message);
@@ -461,10 +468,12 @@
         // =========================================================
         // DÉCONNEXION
         // =========================================================
-        function logout() {
-            localStorage.removeItem('savetronik_admin');
+        async function logout() {
+            await window.db.auth.signOut();
+            localStorage.removeItem('savetronik_session');
+            localStorage.removeItem('savetronik_panier');
             console.log('[SaveTronik Admin] 👋 Déconnexion admin');
-            window.location.reload();
+            window.location.href = 'index.html';
         }
 
         // =========================================================
@@ -481,9 +490,10 @@
         // =========================================================
         // ✅ CHARGEMENT INITIAL — après que le DOM est entièrement prêt
         // =========================================================
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('[SaveTronik Admin] 🚀 DOM prêt — lancement de loadProducts()');
-            loadProducts();
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('[SaveTronik Admin] 🚀 DOM prêt — vérification admin');
+            const ok = await verifierAdmin();
+            if (ok) loadProducts();
         });
     </script>
 </body>
