@@ -122,18 +122,13 @@
         </div>
     </footer>
 
-    <!-- ✅ CDN Supabase : injecte window.supabase, NE PAS redéclarer 'supabase' après -->
+    <!-- ✅ CDN Supabase + auth.js (crée window.db, hamburger, auth) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="auth.js"></script>
 
     <script>
-        // =========================================================
-        // ✅ FIX CRITIQUE : on utilise "db" au lieu de "supabase"
-        // pour éviter le conflit avec window.supabase (CDN global)
-        // =========================================================
-        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        console.log('[SaveTronik] ✅ Client Supabase initialisé (db)');
+        // ✅ window.db est créé par auth.js
 
         let currentFilter = 'all';
 
@@ -350,7 +345,7 @@
         // =========================================================
         // REALTIME SUPABASE — mise à jour automatique des likes
         // =========================================================
-        db.channel('public:likes')
+        window.db.channel('public:likes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'likes' }, (payload) => {
                 console.log('[SaveTronik] 🔔 Changement Realtime détecté sur "likes" :', payload);
                 loadProducts();
