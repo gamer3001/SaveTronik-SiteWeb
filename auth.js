@@ -4,8 +4,6 @@
 // =========================================================
 
 // ✅ CLIENT SUPABASE UNIQUE — stocké dans window.db
-// Toutes les pages utilisent window.db, jamais de "const db" locale
-// pour éviter tout conflit de redéclaration.
 if (!window.db) {
     window.db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     console.log('[SaveTronik Auth] ✅ window.db initialisé depuis auth.js');
@@ -13,10 +11,7 @@ if (!window.db) {
     console.log('[SaveTronik Auth] ♻️ window.db déjà présent, réutilisé');
 }
 
-// Raccourci local (lecture seule, pas de redéclaration dans d'autres fichiers)
 const db = window.db;
-
-// Gestion de l'état d'authentification
 let currentUser = null;
 
 // =========================================================
@@ -31,7 +26,7 @@ async function checkAuth() {
             const { data, error } = await db.auth.getUser(sessionData.access_token);
             if (!error && data.user) {
                 currentUser = data.user;
-                console.log('[SaveTronik Auth] ✅ Session valide pour :', currentUser.email);
+                console.log('[SaveTronik Auth] ✅ Session valide');
                 return currentUser;
             }
         } catch (e) {
@@ -43,47 +38,39 @@ async function checkAuth() {
 }
 
 async function signUp(email, password) {
-    console.log('[SaveTronik Auth] 📝 Inscription :', email);
     const { data, error } = await db.auth.signUp({ email, password });
-    if (error) {
-        console.error('[SaveTronik Auth] ❌ Erreur inscription :', error.message);
-        return { success: false, error: error.message };
-    }
-    console.log('[SaveTronik Auth] ✅ Inscription réussie');
+    if (error) return { success: false, error: error.message };
     return { success: true, data };
 }
 
 async function signIn(email, password) {
-    console.log('[SaveTronik Auth] 🔐 Connexion :', email);
     const { data, error } = await db.auth.signInWithPassword({ email, password });
-    if (error) {
-        console.error('[SaveTronik Auth] ❌ Erreur connexion :', error.message);
-        return { success: false, error: error.message };
-    }
+    if (error) return { success: false, error: error.message };
     localStorage.setItem('savetronik_session', JSON.stringify(data.session));
     currentUser = data.user;
-    console.log('[SaveTronik Auth] ✅ Connecté :', currentUser.email);
-    // Synchroniser le panier après connexion
     await syncPanierAfterLogin();
     return { success: true, user: currentUser };
 }
 
 async function signOut() {
-    console.log('[SaveTronik Auth] 👋 Déconnexion');
-    // Sauvegarder le panier en base avant de déconnecter
     await savePanierToSupabase();
     await db.auth.signOut();
     localStorage.removeItem('savetronik_session');
     localStorage.removeItem('savetronik_panier');
     currentUser = null;
-    console.log('[SaveTronik Auth] ✅ Déconnecté');
     return { success: true };
 }
 
-async function isAdmin() {
+// =========================================================
+// RÔLE ADMIN — lu depuis user_metadata (jamais d'email en dur)
+// Pour activer : dans Supabase Dashboard > Authentication > Users
+// > cliquer sur le compte admin > Edit > user_metadata :
+// { "role": "admin" }
+// =========================================================
+
+function isAdmin() {
     if (!currentUser) return false;
-    const ADMIN_EMAIL = 'link59147@gmail.com';
-    return currentUser.email === ADMIN_EMAIL;
+    return currentUser.user_metadata?.role === 'admin';
 }
 
 // =========================================================
@@ -91,24 +78,51 @@ async function isAdmin() {
 // =========================================================
 
 function getPanier() {
-    const panier = localStorage.getItem('savetronik_panier');
-    return panier ? JSON.parse(panier) : [];
+    try {
+        return JSON.parse(localStorage.getItem('savetronik_panier') || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+function _savePanierLocal(panier) {
+    localStorage.setItem('savetronik_panier', JSON.stringify(panier));
+    updatePanierBadge();
 }
 
 function savePanier(panier) {
-    localStorage.setItem('savetronik_panier', JSON.stringify(panier));
-    // Sauvegarder en base si connecté (sans attendre)
-    if (currentUser) savePanierToSupabase().catch(() => {});
+    _savePanierLocal(panier);
+    if (currentUser) {
+        savePanierToSupabase().catch(e =>
+            console.warn('[SaveTronik Panier] ⚠️ Sync Supabase échoué silencieusement :', e.message)
+        );
+    }
 }
 
 async function savePanierToSupabase() {
     if (!currentUser) return;
     const panier = getPanier();
-    const { error } = await db
+    // On tente d'abord un update, puis un insert si aucune ligne n'existe
+    const { data: existing } = await db
         .from('panier')
-        .upsert({ user_id: currentUser.id, contenu: JSON.stringify(panier) }, { onConflict: 'user_id' });
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
+    let error;
+    if (existing) {
+        ({ error } = await db
+            .from('panier')
+            .update({ contenu: panier, updated_at: new Date().toISOString() })
+            .eq('user_id', currentUser.id));
+    } else {
+        ({ error } = await db
+            .from('panier')
+            .insert({ user_id: currentUser.id, contenu: panier }));
+    }
+
     if (error) {
-        console.warn('[SaveTronik Panier] ⚠️ Erreur sauvegarde Supabase :', error.message);
+        console.warn('[SaveTronik Panier] ⚠️ Erreur sauvegarde :', error.message);
     } else {
         console.log('[SaveTronik Panier] ✅ Panier sauvegardé en base');
     }
@@ -121,22 +135,24 @@ async function loadPanierFromSupabase() {
         .select('contenu')
         .eq('user_id', currentUser.id)
         .maybeSingle();
+
     if (error) {
-        console.warn('[SaveTronik Panier] ⚠️ Erreur chargement Supabase :', error.message);
+        console.warn('[SaveTronik Panier] ⚠️ Erreur chargement :', error.message);
         return;
     }
     if (data && data.contenu) {
-        const panierDistant = JSON.parse(data.contenu);
-        console.log('[SaveTronik Panier] ✅ Panier chargé depuis Supabase :', panierDistant.length, 'article(s)');
-        localStorage.setItem('savetronik_panier', data.contenu);
-        updatePanierBadge();
+        // contenu est un jsonb Supabase → déjà un tableau JS, pas besoin de JSON.parse
+        const panierDistant = Array.isArray(data.contenu)
+            ? data.contenu
+            : JSON.parse(data.contenu);
+        _savePanierLocal(panierDistant);
+        console.log('[SaveTronik Panier] ✅ Panier chargé :', panierDistant.length, 'article(s)');
     }
 }
 
-// Fusion panier local + panier Supabase au moment de la connexion
 async function syncPanierAfterLogin() {
     const panierLocal = getPanier();
-    // Charger le panier distant
+
     const { data, error } = await db
         .from('panier')
         .select('contenu')
@@ -145,72 +161,59 @@ async function syncPanierAfterLogin() {
 
     let panierDistant = [];
     if (!error && data && data.contenu) {
-        try { panierDistant = JSON.parse(data.contenu); } catch(e) {}
+        panierDistant = Array.isArray(data.contenu)
+            ? data.contenu
+            : JSON.parse(data.contenu);
     }
 
-    // Fusionner : le panier local prime, on ajoute les articles distants manquants
+    // Fusion : panier local prime, articles distants absents localement sont ajoutés
     const fusion = [...panierLocal];
     for (const item of panierDistant) {
-        if (!fusion.find(p => p.id === item.id)) {
-            fusion.push(item);
-        }
+        if (!fusion.find(p => p.id === item.id)) fusion.push(item);
     }
 
-    localStorage.setItem('savetronik_panier', JSON.stringify(fusion));
-    updatePanierBadge();
-    // Sauvegarder la fusion en base
+    _savePanierLocal(fusion);
     await savePanierToSupabase();
-    console.log('[SaveTronik Panier] ✅ Panier synchronisé après connexion :', fusion.length, 'article(s)');
+    console.log('[SaveTronik Panier] ✅ Panier fusionné :', fusion.length, 'article(s)');
 }
 
 function addToPanier(product) {
     const panier = getPanier();
-    const existingIndex = panier.findIndex(p => p.id === product.id);
-    if (existingIndex > -1) {
-        panier[existingIndex].quantite = (panier[existingIndex].quantite || 1) + 1;
+    const idx = panier.findIndex(p => p.id === product.id);
+    if (idx > -1) {
+        panier[idx].quantite = (panier[idx].quantite || 1) + 1;
     } else {
-        panier.push({
-            id: product.id,
-            nom: product.nom,
-            prix: product.prix,
-            image_url: product.image_url,
-            quantite: 1
-        });
+        panier.push({ id: product.id, nom: product.nom, prix: product.prix, image_url: product.image_url, quantite: 1 });
     }
     savePanier(panier);
-    console.log('[SaveTronik Panier] ✅ Produit ajouté :', product.nom);
-    updatePanierBadge();
+    console.log('[SaveTronik Panier] ✅ Ajouté :', product.nom);
     return panier;
 }
 
 function removeFromPanier(productId) {
-    let panier = getPanier().filter(p => p.id !== productId);
+    const panier = getPanier().filter(p => p.id !== productId);
     savePanier(panier);
-    console.log('[SaveTronik Panier] ✅ Produit retiré :', productId);
-    updatePanierBadge();
     return panier;
 }
 
 function updateQuantite(productId, quantite) {
     const panier = getPanier();
-    const index = panier.findIndex(p => p.id === productId);
-    if (index > -1) {
-        if (quantite <= 0) panier.splice(index, 1);
-        else panier[index].quantite = quantite;
+    const idx = panier.findIndex(p => p.id === productId);
+    if (idx > -1) {
+        if (quantite <= 0) panier.splice(idx, 1);
+        else panier[idx].quantite = quantite;
     }
     savePanier(panier);
-    updatePanierBadge();
     return panier;
 }
 
 function clearPanier() {
     savePanier([]);
-    updatePanierBadge();
     console.log('[SaveTronik Panier] ✅ Panier vidé');
 }
 
 function getTotalPanier() {
-    return getPanier().reduce((total, p) => total + (p.prix * (p.quantite || 1)), 0);
+    return getPanier().reduce((t, p) => t + (p.prix * (p.quantite || 1)), 0);
 }
 
 function updatePanierBadge() {
@@ -226,9 +229,7 @@ function updatePanierBadge() {
 // =========================================================
 
 function showAuthModal(mode = 'signin') {
-    // Fermer une éventuelle modal déjà ouverte
     closeAuthModal();
-
     const modal = document.createElement('div');
     modal.id = 'auth-modal';
     modal.className = 'modal-overlay';
@@ -256,19 +257,17 @@ function showAuthModal(mode = 'signin') {
                     : "Déjà un compte ? <a href=\"#\" onclick=\"showAuthModal('signin')\">Se connecter</a>"
                 }
             </p>
-        </div>
-    `;
+        </div>`;
     document.body.appendChild(modal);
 
     document.getElementById('auth-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('auth-email').value;
+        const email    = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
         const errorDiv = document.getElementById('auth-error');
-        const submitBtn = document.getElementById('auth-submit');
-
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Chargement...';
+        const btn      = document.getElementById('auth-submit');
+        btn.disabled   = true;
+        btn.textContent = 'Chargement...';
 
         const result = mode === 'signin'
             ? await signIn(email, password)
@@ -281,8 +280,8 @@ function showAuthModal(mode = 'signin') {
         } else {
             errorDiv.textContent = result.error;
             errorDiv.style.display = 'block';
-            submitBtn.disabled = false;
-            submitBtn.textContent = mode === 'signin' ? 'Se connecter' : "S'inscrire";
+            btn.disabled = false;
+            btn.textContent = mode === 'signin' ? 'Se connecter' : "S'inscrire";
         }
     });
 }
@@ -312,19 +311,16 @@ function updateAuthUI() {
 }
 
 function updateAdminButton() {
-    const ADMIN_EMAIL = 'link59147@gmail.com';
-    // Supprimer un éventuel bouton admin déjà injecté
+    // Retirer l'éventuel bouton déjà présent
     const existing = document.getElementById('admin-nav-link');
-    if (existing) existing.parentElement.remove();
+    if (existing) existing.closest('li').remove();
 
-    if (currentUser && currentUser.email === ADMIN_EMAIL) {
-        // Trouver la liste de nav
+    if (isAdmin()) {
         const navUl = document.querySelector('nav ul');
         if (!navUl) return;
         const li = document.createElement('li');
         li.innerHTML = '<a href="admin.html" id="admin-nav-link" style="color:var(--accent);font-weight:bold;">⚙️ Admin</a>';
         navUl.appendChild(li);
-        console.log('[SaveTronik Auth] ✅ Bouton admin affiché');
     }
 }
 
@@ -343,42 +339,19 @@ if (!document.getElementById('auth-styles')) {
     const styleEl = document.createElement('style');
     styleEl.id = 'auth-styles';
     styleEl.textContent = `
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: var(--bg-card); padding: 2rem; border-radius: 12px;
-            max-width: 400px; width: 90%; position: relative;
-            border: 1px solid var(--primary);
-        }
-        .modal-close {
-            position: absolute; top: 10px; right: 15px;
-            background: none; border: none; color: var(--text);
-            font-size: 1.5rem; cursor: pointer;
-        }
-        .modal-close:hover { color: var(--primary); }
-        #auth-title { color: var(--primary); margin-bottom: 1.5rem; text-align: center; }
-        .auth-switch { text-align: center; margin-top: 1rem; color: var(--text-muted); }
-        .auth-switch a { color: var(--secondary); }
-        .error-message {
-            background: rgba(255,68,68,0.2); color: #ff4444;
-            padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem;
-        }
-        .panier-badge {
-            background: var(--accent); color: white; border-radius: 50%;
-            padding: 0.2rem 0.5rem; font-size: 0.75rem; margin-left: 0.5rem;
-        }
-        .notification {
-            position: fixed; top: 100px; right: 20px;
-            padding: 1rem 2rem; border-radius: 8px; z-index: 1000;
-            animation: slideIn 0.3s;
-        }
-        .notification.success { background: var(--primary); color: var(--bg-dark); }
-        .notification.error { background: #ff4444; color: white; }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .modal-overlay { position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:1000; }
+        .modal-content { background:var(--bg-card);padding:2rem;border-radius:12px;max-width:400px;width:90%;position:relative;border:1px solid var(--primary); }
+        .modal-close { position:absolute;top:10px;right:15px;background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer; }
+        .modal-close:hover { color:var(--primary); }
+        #auth-title { color:var(--primary);margin-bottom:1.5rem;text-align:center; }
+        .auth-switch { text-align:center;margin-top:1rem;color:var(--text-muted); }
+        .auth-switch a { color:var(--secondary); }
+        .error-message { background:rgba(255,68,68,0.2);color:#ff4444;padding:0.75rem;border-radius:8px;margin-bottom:1rem; }
+        .panier-badge { background:var(--accent);color:white;border-radius:50%;padding:0.2rem 0.5rem;font-size:0.75rem;margin-left:0.5rem; }
+        .notification { position:fixed;top:100px;right:20px;padding:1rem 2rem;border-radius:8px;z-index:1000;animation:slideIn 0.3s; }
+        .notification.success { background:var(--primary);color:var(--bg-dark); }
+        .notification.error { background:#ff4444;color:white; }
+        @keyframes slideIn { from{transform:translateX(100%)}to{transform:translateX(0)} }
     `;
     document.head.appendChild(styleEl);
 }
@@ -387,13 +360,9 @@ if (!document.getElementById('auth-styles')) {
 // INITIALISATION
 // =========================================================
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('[SaveTronik Auth] 🚀 Initialisation auth.js — DOMContentLoaded');
     await checkAuth();
     updateAuthUI();
-    // Si déjà connecté, charger le panier depuis Supabase
-    if (currentUser) {
-        await loadPanierFromSupabase();
-    }
+    if (currentUser) await loadPanierFromSupabase();
 });
 
 console.log('[SaveTronik Auth] ✅ Module chargé');

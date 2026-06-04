@@ -183,9 +183,12 @@
         // ✅ window.db est créé par auth.js
 
         // =========================================================
-        // VÉRIFICATION ACCÈS ADMIN via session Supabase
+        // VÉRIFICATION ACCÈS ADMIN
+        // Le rôle admin est défini dans Supabase Dashboard :
+        // Authentication > Users > [compte] > Edit > user_metadata
+        // Ajouter : { "role": "admin" }
+        // Aucun email ou mot de passe en dur dans le code.
         // =========================================================
-        const ADMIN_EMAIL = 'link59147@gmail.com';
 
         async function verifierAdmin() {
             const session = localStorage.getItem('savetronik_session');
@@ -197,15 +200,20 @@
             try {
                 const sessionData = JSON.parse(session);
                 const { data, error } = await window.db.auth.getUser(sessionData.access_token);
-                if (error || !data.user || data.user.email !== ADMIN_EMAIL) {
-                    alert('Accès refusé : compte non administrateur.');
+                if (error || !data.user) {
+                    alert('Session invalide. Reconnectez-vous.');
                     window.location.href = 'index.html';
                     return false;
                 }
-                console.log('[SaveTronik Admin] ✅ Accès admin accordé pour :', data.user.email);
+                if (data.user.user_metadata?.role !== 'admin') {
+                    alert('Accès refusé : droits administrateur requis.');
+                    window.location.href = 'index.html';
+                    return false;
+                }
+                console.log('[SaveTronik Admin] ✅ Accès admin accordé');
                 return true;
             } catch (e) {
-                alert('Session invalide. Reconnectez-vous.');
+                alert('Erreur inattendue. Reconnectez-vous.');
                 window.location.href = 'index.html';
                 return false;
             }
