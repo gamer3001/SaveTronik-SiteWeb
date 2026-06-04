@@ -6,216 +6,35 @@
     <title>Panier - SaveTronik</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        .panier-container {
-            max-width: 1000px;
-            margin: 6rem auto 2rem;
-            padding: 0 2rem;
-        }
-
-        .panier-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .panier-header h1 {
-            color: var(--primary);
-        }
-
-        .btn-vider {
-            background: transparent;
-            border: 1px solid #ff4444;
-            color: #ff4444;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-vider:hover {
-            background: #ff4444;
-            color: white;
-        }
-
-        .panier-items {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1rem;
-        }
-
-        .panier-item {
-            display: grid;
-            grid-template-columns: 100px 1fr 150px 100px 50px;
-            gap: 1rem;
-            align-items: center;
-            padding: 1rem;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .panier-item:last-child {
-            border-bottom: none;
-        }
-
-        .panier-item img {
-            width: 100px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-
-        .panier-item h3 {
-            color: var(--text);
-            font-size: 1.1rem;
-        }
-
-        .panier-item .price {
-            color: var(--primary);
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        .quantite-controls {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .quantite-btn {
-            width: 30px;
-            height: 30px;
-            background: var(--bg-dark);
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-
-        .quantite-btn:hover {
-            background: var(--primary);
-            color: var(--bg-dark);
-        }
-
-        .quantite-value {
-            min-width: 30px;
-            text-align: center;
-        }
-
-        .btn-supprimer {
-            background: transparent;
-            border: none;
-            color: #ff4444;
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
-
-        .btn-supprimer:hover {
-            transform: scale(1.2);
-        }
-
-        .panier-empty {
-            text-align: center;
-            padding: 4rem;
-            color: var(--text-muted);
-        }
-
-        .panier-empty .icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-        }
-
-        .panier-summary {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 2rem;
-            margin-top: 2rem;
-        }
-
-        .panier-total {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .panier-total .label {
-            color: var(--text-muted);
-        }
-
-        .panier-total .amount {
-            color: var(--primary);
-            font-weight: bold;
-            font-size: 2rem;
-        }
-
-        .btn-commander {
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border: none;
-            border-radius: 8px;
-            color: var(--bg-dark);
-            font-weight: bold;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
-
-        .btn-commander:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
-        }
-
-        .btn-commander:disabled {
-            background: var(--text-muted);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
+        .panier-container { max-width: 1000px; margin: 6rem auto 2rem; padding: 0 2rem; }
+        .panier-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .panier-header h1 { color: var(--primary); }
+        .btn-vider { background: transparent; border: 1px solid #ff4444; color: #ff4444; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .btn-vider:hover { background: #ff4444; color: white; }
+        .panier-items { background: var(--bg-card); border-radius: 12px; padding: 1rem; }
+        .panier-item { display: grid; grid-template-columns: 100px 1fr 150px 100px 50px; gap: 1rem; align-items: center; padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .panier-item:last-child { border-bottom: none; }
+        .panier-item img { width: 100px; height: 80px; object-fit: cover; border-radius: 8px; }
+        .panier-item h3 { color: var(--text); font-size: 1.1rem; }
+        .panier-item .price { color: var(--primary); font-weight: bold; font-size: 1.1rem; }
+        .quantite-controls { display: flex; align-items: center; gap: 0.5rem; }
+        .quantite-btn { width: 30px; height: 30px; background: var(--bg-dark); border: 1px solid var(--primary); color: var(--primary); border-radius: 4px; cursor: pointer; font-size: 1rem; }
+        .quantite-btn:hover { background: var(--primary); color: var(--bg-dark); }
+        .quantite-value { min-width: 30px; text-align: center; }
+        .btn-supprimer { background: transparent; border: none; color: #ff4444; font-size: 1.5rem; cursor: pointer; transition: transform 0.3s; }
+        .btn-supprimer:hover { transform: scale(1.2); }
+        .panier-empty { text-align: center; padding: 4rem; color: var(--text-muted); }
+        .panier-empty .icon { font-size: 4rem; margin-bottom: 1rem; }
+        .panier-summary { background: var(--bg-card); border-radius: 12px; padding: 2rem; margin-top: 2rem; }
+        .panier-total { display: flex; justify-content: space-between; align-items: center; font-size: 1.5rem; margin-bottom: 1.5rem; }
+        .panier-total .label { color: var(--text-muted); }
+        .panier-total .amount { color: var(--primary); font-weight: bold; font-size: 2rem; }
+        .btn-commander { width: 100%; padding: 1rem; background: linear-gradient(135deg, var(--primary), var(--secondary)); border: none; border-radius: 8px; color: var(--bg-dark); font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: transform 0.3s; }
+        .btn-commander:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3); }
         @media (max-width: 768px) {
-            .panier-item {
-                grid-template-columns: 80px 1fr;
-                gap: 0.5rem;
-            }
-
-            .panier-item img {
-                width: 80px;
-                height: 60px;
-            }
-
-            .panier-item > div:nth-child(3),
-            .panier-item > div:nth-child(4) {
-                grid-column: 2;
-            }
-        }
-
-        .notification {
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            z-index: 1000;
-            animation: slideIn 0.3s;
-        }
-
-        .notification.success {
-            background: var(--primary);
-            color: var(--bg-dark);
-        }
-
-        .notification.error {
-            background: #ff4444;
-            color: white;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); }
-            to { transform: translateX(0); }
+            .panier-item { grid-template-columns: 80px 1fr; gap: 0.5rem; }
+            .panier-item img { width: 80px; height: 60px; }
+            .panier-item > div:nth-child(3), .panier-item > div:nth-child(4) { grid-column: 2; }
         }
     </style>
 </head>
@@ -233,6 +52,7 @@
                     <li><a href="catalogue.html">Catalogue</a></li>
                     <li><a href="contact.html">Contact & Dons</a></li>
                     <li><a href="panier.html">🛒 Panier <span id="panier-badge" class="panier-badge" style="display:none;">0</span></a></li>
+                    <li><a href="#" id="auth-link" onclick="showAuthModal('signin')">🔑 Connexion</a></li>
                 </ul>
             </nav>
         </div>
@@ -243,12 +63,10 @@
             <h1>Mon Panier</h1>
             <button class="btn-vider" onclick="viderPanier()">Vider le panier</button>
         </div>
-
         <div id="panier-content">
             <div class="panier-empty">
                 <div class="icon">🛒</div>
-                <p>Votre panier est vide</p>
-                <a href="catalogue.html" class="cta" style="margin-top: 1rem; display: inline-block;">Voir le catalogue</a>
+                <p>Chargement...</p>
             </div>
         </div>
     </main>
@@ -257,90 +75,76 @@
         <p>&copy; 2026 SaveTronik - Association de reconditionnement informatique</p>
     </footer>
 
+    <!-- ✅ CDN Supabase — NE PAS redéclarer "db" dans ce fichier, auth.js s'en charge -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="auth.js"></script>
+
     <script>
-        // =========================================================
-        // ✅ FIX : utiliser "db" au lieu de "supabase"
-        // =========================================================
-        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // ✅ window.db est créé par auth.js — on l'utilise directement ici
 
-        console.log('[SaveTronik Panier] ✅ Client initialisé');
-
-        // Charger et afficher le panier
         function loadPanier() {
             const panier = getPanier();
             const content = document.getElementById('panier-content');
+            if (!content) return;
 
             if (panier.length === 0) {
                 content.innerHTML = `
                     <div class="panier-empty">
                         <div class="icon">🛒</div>
                         <p>Votre panier est vide</p>
-                        <a href="catalogue.html" class="cta" style="margin-top: 1rem; display: inline-block;">Voir le catalogue</a>
-                    </div>
-                `;
+                        <a href="catalogue.html" class="cta" style="margin-top:1rem;display:inline-block;">Voir le catalogue</a>
+                    </div>`;
                 return;
             }
 
             let html = '<div class="panier-items">';
-            
             panier.forEach(item => {
-                const imageHtml = item.image_url 
+                const imageHtml = item.image_url
                     ? `<img src="${item.image_url}" alt="${item.nom}">`
                     : `<div style="width:100px;height:80px;background:var(--bg-dark);border-radius:8px;display:flex;align-items:center;justify-content:center;">💻</div>`;
-                
+
                 html += `
                     <div class="panier-item">
                         ${imageHtml}
-                        <div>
-                            <h3>${item.nom}</h3>
-                        </div>
+                        <div><h3>${item.nom}</h3></div>
                         <div class="price">${item.prix}€</div>
                         <div class="quantite-controls">
-                            <button class="quantite-btn" onclick="updateQuantite('${item.id}', ${(item.quantite || 1) - 1})">-</button>
+                            <button class="quantite-btn" onclick="changerQuantite('${item.id}', ${(item.quantite || 1) - 1})">-</button>
                             <span class="quantite-value">${item.quantite || 1}</span>
-                            <button class="quantite-btn" onclick="updateQuantite('${item.id}', ${(item.quantite || 1) + 1})">+</button>
+                            <button class="quantite-btn" onclick="changerQuantite('${item.id}', ${(item.quantite || 1) + 1})">+</button>
                         </div>
                         <button class="btn-supprimer" onclick="supprimerItem('${item.id}')">🗑️</button>
-                    </div>
-                `;
+                    </div>`;
             });
-
             html += '</div>';
 
             const total = getTotalPanier();
-            
             html += `
                 <div class="panier-summary">
                     <div class="panier-total">
                         <span class="label">Total</span>
                         <span class="amount">${total}€</span>
                     </div>
-                    <button class="btn-commander" onclick="passerCommande()">
-                        🛍️ Passer la commande
-                    </button>
-                </div>
-            `;
+                    <button class="btn-commander" onclick="passerCommande()">🛍️ Passer la commande</button>
+                </div>`;
 
             content.innerHTML = html;
             updatePanierBadge();
         }
 
-        // Mettre à jour la quantité
-        function updateQuantite(productId, quantite) {
+        // ✅ Renommée "changerQuantite" pour éviter le conflit avec updateQuantite d'auth.js
+        function changerQuantite(productId, quantite) {
             updateQuantite(productId, quantite);
             loadPanier();
         }
 
-        // Supprimer un item
         function supprimerItem(productId) {
             removeFromPanier(productId);
             loadPanier();
             showNotification('Produit retiré du panier', 'success');
         }
 
-        // Vider le panier
         function viderPanier() {
             if (confirm('Vider complètement le panier ?')) {
                 clearPanier();
@@ -349,14 +153,11 @@
             }
         }
 
-        // Passer commande
         async function passerCommande() {
             const panier = getPanier();
             if (panier.length === 0) return;
 
             const userId = localStorage.getItem('savetronik_userid');
-            
-            // Créer la commande
             const commande = {
                 user_id: userId,
                 produits: JSON.stringify(panier),
@@ -364,99 +165,25 @@
                 status: 'en_attente'
             };
 
-            console.log('[SaveTronik Panier] 📦 Création commande:', commande);
+            console.log('[SaveTronik Panier] 📦 Création commande :', commande);
 
-            const { data, error } = await db
-                .from('commandes')
-                .insert(commande);
+            const { error } = await window.db.from('commandes').insert(commande);
 
             if (error) {
-                console.error('[SaveTronik Panier] ❌ Erreur commande:', error);
+                console.error('[SaveTronik Panier] ❌ Erreur commande :', error.message);
                 showNotification('Erreur lors de la commande', 'error');
                 return;
             }
 
-            console.log('[SaveTronik Panier] ✅ Commande créée:', data);
+            console.log('[SaveTronik Panier] ✅ Commande créée');
             clearPanier();
             loadPanier();
             showNotification('Commande passée avec succès !', 'success');
-            
-            // Rediriger vers contact pour finaliser
-            setTimeout(() => {
-                window.location.href = 'contact.html?commande=ok';
-            }, 1500);
+            setTimeout(() => { window.location.href = 'contact.html?commande=ok'; }, 1500);
         }
 
-        // Notification
-        function showNotification(message, type) {
-            const notif = document.createElement('div');
-            notif.className = `notification ${type}`;
-            notif.textContent = message;
-            document.body.appendChild(notif);
-            setTimeout(() => notif.remove(), 3000);
-        }
-
-        // =========================================================
-        // FONCTIONS DU PANIER (copie depuis auth.js pour isolation)
-        // =========================================================
-        function getPanier() {
-            const panier = localStorage.getItem('savetronik_panier');
-            return panier ? JSON.parse(panier) : [];
-        }
-
-        function savePanier(panier) {
-            localStorage.setItem('savetronik_panier', JSON.stringify(panier));
-        }
-
-        function updateQuantite(productId, quantite) {
-            const panier = getPanier();
-            const index = panier.findIndex(p => p.id === productId);
-            
-            if (index > -1) {
-                if (quantite <= 0) {
-                    panier.splice(index, 1);
-                } else {
-                    panier[index].quantite = quantite;
-                }
-            }
-            
-            savePanier(panier);
-            updatePanierBadge();
-        }
-
-        function removeFromPanier(productId) {
-            let panier = getPanier();
-            panier = panier.filter(p => p.id !== productId);
-            savePanier(panier);
-            updatePanierBadge();
-        }
-
-        function clearPanier() {
-            savePanier([]);
-            updatePanierBadge();
-        }
-
-        function getTotalPanier() {
-            const panier = getPanier();
-            return panier.reduce((total, p) => total + (p.prix * (p.quantite || 1)), 0);
-        }
-
-        function updatePanierBadge() {
-            const badge = document.getElementById('panier-badge');
-            const panier = getPanier();
-            const total = panier.reduce((t, p) => t + (p.quantite || 1), 0);
-            
-            if (badge) {
-                badge.textContent = total;
-                badge.style.display = total > 0 ? 'block' : 'none';
-            }
-        }
-
-        // =========================================================
-        // CHARGEMENT INITIAL
-        // =========================================================
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('[SaveTronik Panier] 🚀 DOM prêt');
+            console.log('[SaveTronik Panier] 🚀 DOM prêt — loadPanier()');
             loadPanier();
         });
     </script>

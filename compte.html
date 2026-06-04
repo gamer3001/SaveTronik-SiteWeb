@@ -6,129 +6,26 @@
     <title>Mon compte - SaveTronik</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        .compte-container {
-            max-width: 800px;
-            margin: 6rem auto 2rem;
-            padding: 0 2rem;
-        }
-
-        .compte-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .compte-header h1 {
-            color: var(--primary);
-        }
-
-        .btn-deconnexion {
-            background: transparent;
-            border: 1px solid #ff4444;
-            color: #ff4444;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-deconnexion:hover {
-            background: #ff4444;
-            color: white;
-        }
-
-        .compte-section {
-            background: var(--bg-card);
-            padding: 2rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
-        }
-
-        .compte-section h2 {
-            color: var(--secondary);
-            margin-bottom: 1rem;
-            font-size: 1.3rem;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .info-label {
-            color: var(--text-muted);
-        }
-
-        .info-value {
-            color: var(--text);
-            font-weight: 500;
-        }
-
-        .commande-item {
-            background: var(--bg-dark);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        .commande-item h4 {
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .commande-item .status {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            background: var(--primary);
-            color: var(--bg-dark);
-        }
-
-        .commande-item .status.en_attente {
-            background: #ffaa00;
-            color: var(--bg-dark);
-        }
-
-        .commande-item .status.confirme {
-            background: var(--primary);
-            color: var(--bg-dark);
-        }
-
-        .commande-item .status.livre {
-            background: var(--secondary);
-            color: var(--bg-dark);
-        }
-
-        .no-commandes {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-muted);
-        }
-
-        .btn-gerer-panier {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
-            background: var(--primary);
-            color: var(--bg-dark);
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-            margin-top: 1rem;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 4rem;
-            color: var(--text-muted);
-        }
+        .compte-container { max-width: 800px; margin: 6rem auto 2rem; padding: 0 2rem; }
+        .compte-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .compte-header h1 { color: var(--primary); }
+        .btn-deconnexion { background: transparent; border: 1px solid #ff4444; color: #ff4444; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .btn-deconnexion:hover { background: #ff4444; color: white; }
+        .compte-section { background: var(--bg-card); padding: 2rem; border-radius: 12px; margin-bottom: 2rem; }
+        .compte-section h2 { color: var(--secondary); margin-bottom: 1rem; font-size: 1.3rem; }
+        .info-row { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: var(--text-muted); }
+        .info-value { color: var(--text); font-weight: 500; }
+        .commande-item { background: var(--bg-dark); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+        .commande-item h4 { color: var(--primary); margin-bottom: 0.5rem; }
+        .commande-item .status { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.8rem; }
+        .commande-item .status.en_attente { background: #ffaa00; color: var(--bg-dark); }
+        .commande-item .status.confirme { background: var(--primary); color: var(--bg-dark); }
+        .commande-item .status.livre { background: var(--secondary); color: var(--bg-dark); }
+        .no-commandes { text-align: center; padding: 2rem; color: var(--text-muted); }
+        .btn-gerer-panier { display: inline-block; padding: 0.75rem 1.5rem; background: var(--primary); color: var(--bg-dark); text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 1rem; }
+        .loading { text-align: center; padding: 4rem; color: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -144,7 +41,8 @@
                     <li><a href="presentation.html">Présentation</a></li>
                     <li><a href="catalogue.html">Catalogue</a></li>
                     <li><a href="contact.html">Contact & Dons</a></li>
-                    <li><a href="panier.html">🛒 Panier</a></li>
+                    <li><a href="panier.html">🛒 Panier <span id="panier-badge" class="panier-badge" style="display:none;">0</span></a></li>
+                    <li><a href="compte.html" id="auth-link">👤 Mon compte</a></li>
                 </ul>
             </nav>
         </div>
@@ -155,7 +53,6 @@
             <h1>Mon Compte</h1>
             <button class="btn-deconnexion" onclick="deconnexion()">Déconnexion</button>
         </div>
-
         <div id="compte-content">
             <div class="loading">Chargement...</div>
         </div>
@@ -165,27 +62,23 @@
         <p>&copy; 2026 SaveTronik - Association de reconditionnement informatique</p>
     </footer>
 
+    <!-- ✅ CDN Supabase — NE PAS redéclarer "db" dans ce fichier, auth.js s'en charge -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="auth.js"></script>
+
     <script>
-        // =========================================================
-        // ✅ FIX : utiliser "db" au lieu de "supabase"
-        // =========================================================
-        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // ✅ window.db est créé par auth.js — on l'utilise directement ici
 
-        console.log('[SaveTronik Compte] ✅ Client initialisé');
-
-        // Vérifier l'authentification
-        async function checkAuth() {
+        async function verifierAuth() {
             const session = localStorage.getItem('savetronik_session');
             if (!session) {
                 window.location.href = 'index.html';
                 return null;
             }
-
             try {
                 const sessionData = JSON.parse(session);
-                const { data, error } = await db.auth.getUser(sessionData.access_token);
+                const { data, error } = await window.db.auth.getUser(sessionData.access_token);
                 if (error || !data.user) {
                     localStorage.removeItem('savetronik_session');
                     window.location.href = 'index.html';
@@ -198,44 +91,42 @@
             }
         }
 
-        // Charger les infos du compte
         async function loadCompte() {
-            const user = await checkAuth();
+            const user = await verifierAuth();
             if (!user) return;
 
             const content = document.getElementById('compte-content');
-
-            // Charger les commandes
             const userId = localStorage.getItem('savetronik_userid');
-            const { data: commandes, error } = await db
+
+            const { data: commandes, error } = await window.db
                 .from('commandes')
                 .select('*')
                 .eq('user_id', userId)
                 .order('created_at', { ascending: false });
 
+            if (error) {
+                console.error('[SaveTronik Compte] ❌ Erreur chargement commandes :', error.message);
+            }
+
             let commandesHtml = '';
             if (commandes && commandes.length > 0) {
                 commandesHtml = commandes.map(cmd => {
                     let produits = [];
-                    try {
-                        produits = JSON.parse(cmd.produits);
-                    } catch (e) {}
-
+                    try { produits = JSON.parse(cmd.produits); } catch (e) {}
+                    const statusLabel = cmd.status === 'confirme' ? 'Confirmé' : cmd.status === 'livre' ? 'Livré' : 'En attente';
                     return `
                         <div class="commande-item">
                             <h4>Commande #${cmd.id.substring(0, 8)}</h4>
-                            <p>${produits.length} produit(s) - Total: ${cmd.total}€</p>
-                            <span class="status ${cmd.status || 'en_attente'}">${cmd.status === 'confirme' ? 'Confirmé' : cmd.status === 'livre' ? 'Livré' : 'En attente'}</span>
-                        </div>
-                    `;
+                            <p>${produits.length} produit(s) — Total : ${cmd.total}€</p>
+                            <span class="status ${cmd.status || 'en_attente'}">${statusLabel}</span>
+                        </div>`;
                 }).join('');
             } else {
                 commandesHtml = '<div class="no-commandes">Aucune commande pour le moment</div>';
             }
 
-            // Infos panier
-            const panier = JSON.parse(localStorage.getItem('savetronik_panier') || '[]');
-            const totalPanier = panier.reduce((t, p) => t + (p.prix * (p.quantite || 1)), 0);
+            const panier = getPanier();
+            const totalPanier = getTotalPanier();
 
             content.innerHTML = `
                 <div class="compte-section">
@@ -249,7 +140,6 @@
                         <span class="info-value">${new Date(user.created_at).toLocaleDateString('fr-FR')}</span>
                     </div>
                 </div>
-
                 <div class="compte-section">
                     <h2>🛒 Mon panier</h2>
                     <div class="info-row">
@@ -258,31 +148,25 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label">Total</span>
-                        <span class="info-value" style="color: var(--primary); font-size: 1.2rem;">${totalPanier}€</span>
+                        <span class="info-value" style="color:var(--primary);font-size:1.2rem;">${totalPanier}€</span>
                     </div>
                     <a href="panier.html" class="btn-gerer-panier">Voir mon panier</a>
                 </div>
-
                 <div class="compte-section">
                     <h2>📦 Mes commandes</h2>
                     ${commandesHtml}
-                </div>
-            `;
+                </div>`;
         }
 
-        // Déconnexion
         async function deconnexion() {
-            await db.auth.signOut();
+            await window.db.auth.signOut();
             localStorage.removeItem('savetronik_session');
             localStorage.removeItem('savetronik_panier');
             window.location.href = 'index.html';
         }
 
-        // =========================================================
-        // CHARGEMENT INITIAL
-        // =========================================================
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('[SaveTronik Compte] 🚀 DOM prêt');
+            console.log('[SaveTronik Compte] 🚀 DOM prêt — loadCompte()');
             loadCompte();
         });
     </script>
