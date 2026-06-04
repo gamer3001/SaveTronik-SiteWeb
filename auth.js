@@ -63,11 +63,15 @@ async function signIn(email, password) {
     localStorage.setItem('savetronik_session', JSON.stringify(data.session));
     currentUser = data.user;
     console.log('[SaveTronik Auth] ✅ Connecté :', currentUser.email);
+    // Synchroniser le panier après connexion
+    await syncPanierAfterLogin();
     return { success: true, user: currentUser };
 }
 
 async function signOut() {
     console.log('[SaveTronik Auth] 👋 Déconnexion');
+    // Sauvegarder le panier en base avant de déconnecter
+    await savePanierToSupabase();
     await db.auth.signOut();
     localStorage.removeItem('savetronik_session');
     localStorage.removeItem('savetronik_panier');
@@ -78,12 +82,12 @@ async function signOut() {
 
 async function isAdmin() {
     if (!currentUser) return false;
-    const ADMIN_EMAIL = 'admin@savetronik.org';
+    const ADMIN_EMAIL = 'link59147@gmail.com';
     return currentUser.email === ADMIN_EMAIL;
 }
 
 // =========================================================
-// PANIER
+// PANIER — synchronisé avec Supabase si connecté
 // =========================================================
 
 function getPanier() {
@@ -93,6 +97,70 @@ function getPanier() {
 
 function savePanier(panier) {
     localStorage.setItem('savetronik_panier', JSON.stringify(panier));
+    // Sauvegarder en base si connecté (sans attendre)
+    if (currentUser) savePanierToSupabase().catch(() => {});
+}
+
+async function savePanierToSupabase() {
+    if (!currentUser) return;
+    const panier = getPanier();
+    const { error } = await db
+        .from('panier')
+        .upsert({ user_id: currentUser.id, contenu: JSON.stringify(panier) }, { onConflict: 'user_id' });
+    if (error) {
+        console.warn('[SaveTronik Panier] ⚠️ Erreur sauvegarde Supabase :', error.message);
+    } else {
+        console.log('[SaveTronik Panier] ✅ Panier sauvegardé en base');
+    }
+}
+
+async function loadPanierFromSupabase() {
+    if (!currentUser) return;
+    const { data, error } = await db
+        .from('panier')
+        .select('contenu')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+    if (error) {
+        console.warn('[SaveTronik Panier] ⚠️ Erreur chargement Supabase :', error.message);
+        return;
+    }
+    if (data && data.contenu) {
+        const panierDistant = JSON.parse(data.contenu);
+        console.log('[SaveTronik Panier] ✅ Panier chargé depuis Supabase :', panierDistant.length, 'article(s)');
+        localStorage.setItem('savetronik_panier', data.contenu);
+        updatePanierBadge();
+    }
+}
+
+// Fusion panier local + panier Supabase au moment de la connexion
+async function syncPanierAfterLogin() {
+    const panierLocal = getPanier();
+    // Charger le panier distant
+    const { data, error } = await db
+        .from('panier')
+        .select('contenu')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
+    let panierDistant = [];
+    if (!error && data && data.contenu) {
+        try { panierDistant = JSON.parse(data.contenu); } catch(e) {}
+    }
+
+    // Fusionner : le panier local prime, on ajoute les articles distants manquants
+    const fusion = [...panierLocal];
+    for (const item of panierDistant) {
+        if (!fusion.find(p => p.id === item.id)) {
+            fusion.push(item);
+        }
+    }
+
+    localStorage.setItem('savetronik_panier', JSON.stringify(fusion));
+    updatePanierBadge();
+    // Sauvegarder la fusion en base
+    await savePanierToSupabase();
+    console.log('[SaveTronik Panier] ✅ Panier synchronisé après connexion :', fusion.length, 'article(s)');
 }
 
 function addToPanier(product) {
@@ -244,7 +312,7 @@ function updateAuthUI() {
 }
 
 function updateAdminButton() {
-    const ADMIN_EMAIL = 'admin@savetronik.org';
+    const ADMIN_EMAIL = 'link59147@gmail.com';
     // Supprimer un éventuel bouton admin déjà injecté
     const existing = document.getElementById('admin-nav-link');
     if (existing) existing.parentElement.remove();
@@ -322,6 +390,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('[SaveTronik Auth] 🚀 Initialisation auth.js — DOMContentLoaded');
     await checkAuth();
     updateAuthUI();
+    // Si déjà connecté, charger le panier depuis Supabase
+    if (currentUser) {
+        await loadPanierFromSupabase();
+    }
 });
 
 console.log('[SaveTronik Auth] ✅ Module chargé');
