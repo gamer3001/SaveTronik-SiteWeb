@@ -87,6 +87,8 @@
                     <li><a href="presentation.html">Présentation</a></li>
                     <li><a href="catalogue.html">Catalogue</a></li>
                     <li><a href="contact.html">Contact & Dons</a></li>
+                    <li><a href="panier.html">🛒 Panier <span id="panier-badge" class="panier-badge" style="display:none;">0</span></a></li>
+                    <li><a href="#" id="auth-link" onclick="showAuthModal('signin')">🔑 Connexion</a></li>
                 </ul>
             </nav>
         </div>
@@ -124,6 +126,7 @@
     <!-- ✅ CDN Supabase : injecte window.supabase, NE PAS redéclarer 'supabase' après -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="auth.js"></script>
 
     <script>
         // =========================================================
@@ -261,8 +264,11 @@
                                     <span class="heart">${userLiked ? '❤️' : '🤍'}</span>
                                     <span class="count">${likeCount}</span>
                                 </button>
-                                <button class="btn-like" style="border-color: var(--primary); color: var(--primary);"
-                                    onclick="alert('Contact : contact@savetronik.org')">
+                                <button class="btn-like" style="border-color: var(--primary); color: var(--primary);" onclick="event.stopPropagation(); addToPanierFromCatalog('${product.id}')">
+                                    🛒 Panier
+                                </button>
+                                <button class="btn-like" style="border-color: var(--secondary); color: var(--secondary);"
+                                    onclick="event.stopPropagation(); alert('Contact : contact@savetronik.org')">
                                     📩 Contacter
                                 </button>
                             </div>
@@ -330,6 +336,33 @@
 
             } catch (err) {
                 console.error('[SaveTronik] ❌ Erreur inattendue dans toggleLike() :', err);
+            }
+        }
+
+        // =========================================================
+        // AJOUTER AU PANIER
+        // =========================================================
+        async function addToPanierFromCatalog(productId) {
+            console.log('[SaveTronik] 🛒 addToPanierFromCatalog() pour produit :', productId);
+
+            try {
+                const { data: product, error } = await db
+                    .from('produits')
+                    .select('*')
+                    .eq('id', productId)
+                    .single();
+
+                if (error || !product) {
+                    console.error('[SaveTronik] ❌ Erreur récupération produit :', error);
+                    return;
+                }
+
+                addToPanier(product);
+                console.log('[SaveTronik] ✅ Produit ajouté au panier :', product.nom);
+                alert(product.nom + ' ajouté au panier !');
+
+            } catch (err) {
+                console.error('[SaveTronik] ❌ Erreur inattendue dans addToPanierFromCatalog() :', err);
             }
         }
 

@@ -424,8 +424,12 @@ if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_KEY === 'undefined') 
 
                         <div class="product-actions">
 
-                            <a href="contact.html" class="btn-contact">
-                                📩 Contacter pour acheter
+                            <button class="btn-contact" onclick="addToPanierFromProduct()">
+                                🛒 Ajouter au panier
+                            </button>
+
+                            <a href="contact.html" class="btn-contact" style="background: var(--secondary);">
+                                📩 Contacter
                             </a>
 
                             <button
@@ -537,6 +541,52 @@ if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_KEY === 'undefined') 
 
     console.log('[SaveTronik Produit] 🚀 Appel initial de loadProduct()');
     loadProduct();
+}
+</script>
+
+<!-- Ajout au panier -->
+<script>
+// Fonction pour ajouter au panier depuis la page produit
+async function addToPanierFromProduct() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    
+    if (!productId) return;
+    
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    const { data: product, error } = await db
+        .from('produits')
+        .select('*')
+        .eq('id', productId)
+        .single();
+
+    if (error || !product) {
+        console.error('[SaveTronik] ❌ Erreur:', error);
+        return;
+    }
+
+    // Ajouter au panier via localStorage
+    let panier = JSON.parse(localStorage.getItem('savetronik_panier') || '[]');
+    const existing = panier.findIndex(p => p.id === product.id);
+    
+    if (existing > -1) {
+        panier[existing].quantite = (panier[existing].quantite || 1) + 1;
+    } else {
+        panier.push({ id: product.id, nom: product.nom, prix: product.prix, image_url: product.image_url, quantite: 1 });
+    }
+    
+    localStorage.setItem('savetronik_panier', JSON.stringify(panier));
+    
+    // Mise à jour du badge
+    const badge = document.getElementById('panier-badge');
+    if (badge) {
+        const total = panier.reduce((t, p) => t + (p.quantite || 1), 0);
+        badge.textContent = total;
+        badge.style.display = total > 0 ? 'block' : 'none';
+    }
+    
+    alert(product.nom + ' ajouté au panier !');
 }
 </script>
 

@@ -19,6 +19,8 @@
                     <li><a href="presentation.html">Présentation</a></li>
                     <li><a href="catalogue.html">Catalogue</a></li>
                     <li><a href="contact.html">Contact & Dons</a></li>
+                    <li><a href="panier.html">🛒 Panier <span id="panier-badge" class="panier-badge" style="display:none;">0</span></a></li>
+                    <li><a href="#" id="auth-link" onclick="showAuthModal('signin')">🔑 Connexion</a></li>
                 </ul>
             </nav>
         </div>
@@ -27,12 +29,12 @@
     <main>
         <section class="hero">
             <h1>Donnez une deuxième vie au matériel informatique</h1>
-            <p>Nous récupérons le matériel professionnel destined à être jeté et le revendons à prix réduit pour aider les associations et micro-entreprises à se lancer.</p>
+            <p>Nous récupérons le matériel professionnel destiné à être jeté et le revendons à prix réduit pour aider les associations et micro-entreprises à se lancer.</p>
             <a href="presentation.html" class="cta">Découvrir notre mission</a>
         </section>
 
         <section>
-            <h2>NotreCatalogue</h2>
+            <h2>Notre Catalogue</h2>
             <p style="text-align: center; color: var(--text-muted);">Du matériel professionnel reconditionné, testé et garanti</p>
             
             <div class="products-grid">
@@ -113,7 +115,7 @@
                 </div>
                 <div class="value-card">
                     <div class="icon">✅</div>
-                    <h4> Qualité garantie</h4>
+                    <h4>Qualité garantie</h4>
                     <p>Tout le matériel est testé et reconditionné par nos soins</p>
                 </div>
             </div>
@@ -128,5 +130,10 @@
             <a href="#" title="LinkedIn">💼</a>
         </div>
     </footer>
+
+    <!-- CDN Supabase + Auth -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
 </body>
 </html>

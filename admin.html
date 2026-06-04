@@ -68,7 +68,7 @@
         </div>
     </header>
 
-    <main class="admin-container">
+    <main class="admin-container" id="admin-content">
         <div class="admin-header">
             <h1>Gestion du Catalogue</h1>
             <button class="btn-logout" onclick="logout()">Déconnexion</button>
@@ -188,21 +188,95 @@
         console.log('[SaveTronik Admin] ✅ Client Supabase initialisé (db)');
 
         // =========================================================
-        // VÉRIFICATION ACCÈS ADMIN (mot de passe local)
+        // ✅ NOUVEAU : VÉRIFICATION ACCÈS ADMIN (Supabase Auth)
         // =========================================================
-        const adminPassword = localStorage.getItem('savetronik_admin');
-        if (!adminPassword) {
-            const password = prompt('Mot de passe admin :');
-            if (password !== 'SaveTronik2026!') {
-                alert('Accès refusé');
-                window.location.href = 'index.html';
-            } else {
-                localStorage.setItem('savetronik_admin', password);
-                console.log('[SaveTronik Admin] ✅ Accès admin accordé');
+        const ADMIN_EMAIL = 'admin@savetronik.org';
+        
+        async function checkAdminAccess() {
+            const session = localStorage.getItem('savetronik_session');
+            
+            if (!session) {
+                showLoginForm();
+                return false;
             }
-        } else {
-            console.log('[SaveTronik Admin] ✅ Session admin existante trouvée');
+            
+            try {
+                const sessionData = JSON.parse(session);
+                const { data, error } = await db.auth.getUser(sessionData.access_token);
+                
+                if (error || !data.user) {
+                    localStorage.removeItem('savetronik_session');
+                    showLoginForm();
+                    return false;
+                }
+                
+                if (data.user.email !== ADMIN_EMAIL) {
+                    alert('Accès réservé à l\'administrateur');
+                    window.location.href = 'index.html';
+                    return false;
+                }
+                
+                console.log('[SaveTronik Admin] ✅ Accès admin confirmé:', data.user.email);
+                return true;
+                
+            } catch (e) {
+                console.error('[SaveTronik Admin] ❌ Erreur vérification:', e);
+                showLoginForm();
+                return false;
+            }
         }
+        
+        function showLoginForm() {
+            document.getElementById('admin-content').innerHTML = `
+                <div class="admin-section" style="max-width: 400px; margin: 4rem auto; text-align: center;">
+                    <h2 style="color: var(--primary);">Connexion Admin</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 2rem;">Veuillez vous connecter pour accéder à l'administration</p>
+                    <form id="admin-login-form">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="admin-email" required placeholder="admin@savetronik.org">
+                        </div>
+                        <div class="form-group">
+                            <label>Mot de passe</label>
+                            <input type="password" id="admin-password" required placeholder="••••••••">
+                        </div>
+                        <div id="admin-error" style="color: #ff4444; margin-bottom: 1rem; display: none;"></div>
+                        <button type="submit" class="cta" style="width: 100%;">Se connecter</button>
+                    </form>
+                    <p style="margin-top: 1rem;">
+                        <a href="index.html" style="color: var(--text-muted);">← Retour au site</a>
+                    </p>
+                </div>
+            `;
+            
+            document.getElementById('admin-login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('admin-email').value;
+                const password = document.getElementById('admin-password').value;
+                const errorDiv = document.getElementById('admin-error');
+                
+                const { data, error } = await db.auth.signInWithPassword({ email, password });
+                
+                if (error) {
+                    errorDiv.textContent = error.message;
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+                
+                if (email !== ADMIN_EMAIL) {
+                    errorDiv.textContent = 'Accès réservé à l\'administrateur';
+                    errorDiv.style.display = 'block';
+                    await db.auth.signOut();
+                    return;
+                }
+                
+                localStorage.setItem('savetronik_session', JSON.stringify(data.session));
+                window.location.reload();
+            });
+        }
+        
+        // Vérifier l'accès admin au chargement
+        checkAdminAccess();
 
         let uploadedImageUrl = null;
 
@@ -481,9 +555,15 @@
         // =========================================================
         // ✅ CHARGEMENT INITIAL — après que le DOM est entièrement prêt
         // =========================================================
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('[SaveTronik Admin] 🚀 DOM prêt — lancement de loadProducts()');
-            loadProducts();
+        let adminAccessGranted = false;
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('[SaveTronik Admin] 🚀 DOM prêt');
+            adminAccessGranted = await checkAdminAccess();
+            
+            if (adminAccessGranted) {
+                loadProducts();
+            }
         });
     </script>
 </body>

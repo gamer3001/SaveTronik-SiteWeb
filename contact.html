@@ -19,7 +19,8 @@
                     <li><a href="presentation.html">Présentation</a></li>
                     <li><a href="catalogue.html">Catalogue</a></li>
                     <li><a href="contact.html">Contact & Dons</a></li>
-                    <li><a href="admin.html">Admin</a></li>
+                    <li><a href="panier.html">🛒 Panier <span id="panier-badge" class="panier-badge" style="display:none;">0</span></a></li>
+                    <li><a href="#" id="auth-link" onclick="showAuthModal('signin')">🔑 Connexion</a></li>
                 </ul>
             </nav>
         </div>
@@ -162,5 +163,10 @@
             <a href="#" title="LinkedIn">💼</a>
         </div>
     </footer>
+
+    <!-- CDN Supabase + Auth -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
 </body>
 </html>
